@@ -30,7 +30,7 @@ void NeuralNetwork::addLayer(int neuronCount, OutputFunction outputFunction)
 	}
 }
 
-void NeuralNetwork::compute(float* input, int inputSize, float* output)
+void NeuralNetwork::compute(float* input, int inputSize, float* output) const
 {
 	std::vector<float> values(input, input + inputSize);
 	
@@ -56,6 +56,22 @@ int NeuralNetwork::getOutputSize() const
 void NeuralNetwork::debug_setValue(int matrixIndex, int x, int y, float value)
 {
 	_matrices[matrixIndex](x, y) = value;
+}
+
+void NeuralNetwork::train(std::vector<Data>& dataset)
+{
+	int inputSize = dataset.front().input.size();
+	for (Data& data : dataset)
+	{
+		data.output.resize(getOutputSize());
+		compute(data.input.data(), inputSize, data.output.data());
+		
+	}
+}
+
+void NeuralNetwork::backpropagate(const std::vector<float>& expectedOutput, const std::vector<float>& output)
+{
+
 }
 
 NeuralNetwork* NeuralNetwork_Create()

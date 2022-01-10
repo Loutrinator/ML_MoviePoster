@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Matrix.h"
+#include "Data.h"
 #include <vector>
 #include <utility>
 #include <functional>
@@ -22,13 +23,16 @@ public:
 	void addLayer(int neuronCount, OutputFunction outputFunction);
 	
 	int getOutputSize() const;
-	void compute(float* input, int inputSize, float* output);
+	void compute(float* input, int inputSize, float* output) const;
+	void train(std::vector<Data>& dataset);
 	
 	void debug_setValue(int matrixIndex, int x, int y, float value);
 
 private:
 	std::vector<std::pair<int, std::function<void(std::vector<float>&)>>> _layers;
 	std::vector<Matrix<float>> _matrices;
+	
+	void backpropagate(const std::vector<float>& expectedOutput, const std::vector<float>& output);
 };
 
 API_EXPORT NeuralNetwork* NeuralNetwork_Create();

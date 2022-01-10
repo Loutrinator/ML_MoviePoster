@@ -1,5 +1,6 @@
 #include <iostream>
 #include "NeuralNetwork.h"
+#include "Data.h"
 
 int main()
 {
@@ -7,12 +8,22 @@ int main()
 	network.addLayer(2, OutputFunction::LINEAR);
 	network.addLayer(1, OutputFunction::LINEAR);
 	
-	network.debug_setValue(0, 0, 0, 0.42);
-	network.debug_setValue(0, 1, 0, 0.69);
+	std::vector<Data> dataset(30);
+	for(Data& data : dataset)
+	{
+		data.input = {0.5,0.12};
+		data.expectedOutput = {1};
+	}
 	
-	std::vector<float> input = {0.122415f, 0.878};
-	float output;
-	network.compute(input.data(), 2, &output);
+	network.train(dataset);
 	
-	std::cout << output << std::endl;
+	for(Data& data : dataset)
+	{
+		std::cout << "My Output : \n";
+		for(float out : data.output)
+		{
+			std::cout << out << ", ";
+		}
+		std::cout << std::endl;
+	}
 }

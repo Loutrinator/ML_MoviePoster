@@ -44,7 +44,7 @@ public:
 		return _data[pos2Index(x, y)];
 	}
 	
-	std::vector<float> operator*(const std::vector<float>& vector)
+	std::vector<float> operator*(const std::vector<float>& vector) const
 	{
 		assert(vector.size() == width());
 		
