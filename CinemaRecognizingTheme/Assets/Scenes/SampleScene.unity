@@ -188,7 +188,7 @@ SpriteRenderer:
   m_Size: {x: 1, y: 1}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!4 &14290674
@@ -245,10 +245,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 106823849}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f6967ee40ec2c9c4b86d952b20e76c97, type: 3}
+  m_Script: {fileID: 11500000, guid: e42bbac57183f49498723c4e659c353e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  point: {fileID: 7967608278207342955, guid: a76d57dac98523e428e2087dc7dfcdb5, type: 3}
+  point: {fileID: 7967608278207342955, guid: 661e154c5cb3c1e46818f7a0de7a1930, type: 3}
+  filePath: TestCases/test_simpleXOR.csv
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0

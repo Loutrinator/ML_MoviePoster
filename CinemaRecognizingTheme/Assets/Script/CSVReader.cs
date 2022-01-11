@@ -6,12 +6,14 @@ using UnityEngine;
 public class CSVReader : MonoBehaviour
 {
     [SerializeField]
-    GameObject point;
+    private GameObject point;
+
+    [SerializeField] private string filePath;
 
     // Start is called before the first frame update
     void Start()
     {
-        StreamReader str = new StreamReader("D:\\ESGI\\Machine_Learning\\ML\\CinemaRecognizingTheme\\Assets\\testCSV.csv");
+        StreamReader str = new StreamReader(Application.dataPath + "/StreamingAssets/Datasets/" + filePath);
         bool endFile = false;
         str.ReadLine();
         while (!endFile)
