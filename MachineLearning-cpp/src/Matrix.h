@@ -14,12 +14,12 @@ public:
 	
 	}
 	
-	int width()
+	int width() const
 	{
 		return _width;
 	}
 	
-	int height()
+	int height() const
 	{
 		return _height;
 	}
