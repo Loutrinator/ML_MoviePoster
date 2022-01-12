@@ -175,7 +175,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9a1a33d9940e0e64c886eb85a452c824, type: 2}
+  - {fileID: 2100000, guid: bbe4ea4f904758f41ba33e5f2db484fc, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -262,8 +262,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e42bbac57183f49498723c4e659c353e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  point: {fileID: 7967608278207342955, guid: 661e154c5cb3c1e46818f7a0de7a1930, type: 3}
-  filePath: TestCases/test_simpleXOR.csv
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -458,14 +456,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 632176012}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 157a91661638d864ea46e884d7e577c0, type: 3}
+  m_Script: {fileID: 11500000, guid: 22367e4ff4847da4180ef56ff293b8df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pointPrefab: {fileID: 4190195516059201017, guid: 661e154c5cb3c1e46818f7a0de7a1930, type: 3}
+  pointPrefab: {fileID: 4190195516059201017, guid: 39ea6ccf3a147954f85a8bdb3a49ea04, type: 3}
   blueButton: {fileID: 1280986118}
-  blue: {fileID: 2100000, guid: a7dc73224bfe5a942a34730c283f2837, type: 2}
+  blue: {fileID: 2100000, guid: 41d7aafbedd6abc428d4ac394a286a36, type: 2}
   redButton: {fileID: 1435995121}
-  red: {fileID: 2100000, guid: 03a09fee0f24a094f8d2bda75219b02e, type: 2}
+  red: {fileID: 2100000, guid: 2e3fa91b1a2b5704195ca36bc8cf2e2b, type: 2}
 --- !u!1 &776905765
 GameObject:
   m_ObjectHideFlags: 0
