@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,6 +18,8 @@ public class CSVEditor : MonoBehaviour
     
     [SerializeField] private Button redButton;
     [SerializeField] private Material red;
+    [SerializeField] private Text filename;
+
     private int currentColorMode = 0;
 
     private List<MeshRenderer> points;
@@ -62,5 +66,27 @@ public class CSVEditor : MonoBehaviour
                 }
             }
         }
+    }
+
+    public void WriteCSV()
+    {
+        string filePath = Application.dataPath + "/StreamingAssets/Datasets/TestCases/" + filename.text+".csv";
+
+        StreamWriter writer = new StreamWriter(filePath);
+
+        writer.WriteLine("x;y;color");
+
+        for(int i = 0; i < transform.childCount; i++)
+        {
+            if(transform.GetChild(i).name.Contains("Circle"))
+            {
+                Transform circle = transform.GetChild(i);
+                int color = circle.GetComponent<MeshRenderer>().material.color == Color.blue ? 0 : 1;
+                writer.WriteLine(circle.position.x + ";" + circle.position.y + ";" + color);
+            }
+        }
+
+        writer.Close();
+        AssetDatabase.Refresh();
     }
 }
