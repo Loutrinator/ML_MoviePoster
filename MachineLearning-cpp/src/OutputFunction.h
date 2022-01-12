@@ -2,5 +2,6 @@
 
 enum class OutputFunction
 {
-	LINEAR
+	LINEAR,
+    SIGMOID
 };

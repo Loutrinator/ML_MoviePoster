@@ -9,7 +9,7 @@ cmake_policy(SET CMP0091 NEW)
 project(MachineLearning)
 
 add_executable(MachineLearning src/Main.cpp src/NeuralNetwork.cpp src/NeuralNetwork.h src/Matrix.h src/OutputFunction.h src/Data.h)
-#add_library(MachineLearning SHARED src/NeuralNetwork.cpp src/NeuralNetwork.h src/Matrix.h)
+#add_library(MachineLearning SHARED src/NeuralNetwork.cpp src/NeuralNetwork.h src/Matrix.h src/OutputFunction.h src/Data.h)
 
 set_property(TARGET MachineLearning PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
