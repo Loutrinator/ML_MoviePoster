@@ -50,9 +50,9 @@ public class NeuralNetwork : SafeHandleZeroOrMinusOneIsInvalid
 		NeuralNetwork_Train(handle, dataset.DangerousGetHandle(), iterations, alpha, isClassification);
 	}
 
-	public void Evaluate(Dataset dataset, int iterations, float diffThreshold)
+	public float Evaluate(Dataset dataset, int iterations, float diffThreshold)
 	{
-		NeuralNetwork_Evaluate(handle, dataset.DangerousGetHandle(), iterations, diffThreshold);
+		return NeuralNetwork_Evaluate(handle, dataset.DangerousGetHandle(), iterations, diffThreshold);
 	}
 
 #if DEBUG
@@ -83,7 +83,7 @@ public class NeuralNetwork : SafeHandleZeroOrMinusOneIsInvalid
 	private static extern void NeuralNetwork_Train(IntPtr ptr, IntPtr dataset, int iterations, float alpha, bool isClassification);
 
 	[DllImport(DLL_NAME)]
-	private static extern void NeuralNetwork_Evaluate(IntPtr ptr, IntPtr dataset, int iterations, float diffThreshold);
+	private static extern float NeuralNetwork_Evaluate(IntPtr ptr, IntPtr dataset, int iterations, float diffThreshold);
 }
 }
 
