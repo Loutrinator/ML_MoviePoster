@@ -2,6 +2,29 @@
 #include <random>
 #include <iostream>
 
+static void printDeltas(const std::vector<std::vector<float>>& deltasVector)
+{
+	for(int i = 0; i < deltasVector.size(); i++)
+	{
+		std::vector<float> deltas = deltasVector[i];
+		std::cout << "Deltas["<< i << "] : (" << deltas[0];
+		for(int j= 1; j < deltas.size();j++){
+			std::cout << " , " << deltas[j];
+		}
+		std::cout << ")" << std::endl;
+	}
+}
+
+static void printValues(const std::vector<float>& values)
+{
+	std::cout << "(" << values[0];
+	for(int j= 1; j < values.size();j++)
+	{
+		std::cout << " , " << values[j];
+	}
+	std::cout << ")" << std::endl;
+}
+
 static void linear(std::vector<float>& values)
 {
 	for (float& value : values)
@@ -53,19 +76,22 @@ void NeuralNetwork::addLayer(int neuronCount, OutputFunction outputFunction)
 void NeuralNetwork::compute(std::span<float> input, std::span<float> output)
 {
 	std::vector<float> values(input.begin(), input.end());
-
-    _valuesVector.push_back(values);//on stoque les inputs dans values
-    values.emplace_back(1.0f);//inputs + biais
 	
-	for (int i = 0; i < _matrices.size(); i++)
+	for (int i = 0; i < _layers.size(); i++)
 	{
-		values = _matrices[i] * values; //calcul
-        if(debugMode){
-            std::cout << "Values before function : ";
-            printValues(values);
-        }
+		if (i > 0)
+		{
+			values = _matrices[i-1] * values; //calcul
+			if(_debugMode)
+			{
+				std::cout << "Values before function : ";
+				printValues(values);
+			}
+		}
+		
         _layers[i].second(values);//application de la fonction sigmo/lineaire
-        if(debugMode){
+        if(_debugMode)
+		{
             std::cout << "Values after function : ";
             printValues(values);
         }
@@ -88,16 +114,11 @@ void NeuralNetwork::debug_setValue(int matrixIndex, int x, int y, float value)
 	_matrices[matrixIndex](x, y) = value;
 }
 
-void NeuralNetwork::train(std::vector<Data>& dataset, int iterations, float alpha, bool isClassification)
+void NeuralNetwork::train(Dataset& dataset, int iterations, float alpha, bool isClassification)
 {
-    for (Data& data : dataset)
-    {
-        data.output.resize(getOutputSize());
-    }
-
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
-    std::uniform_int_distribution<> distr(0, dataset.size()- 1);
+    std::uniform_int_distribution<> distr(0, dataset.data().size()- 1);
 
     std::vector<std::vector<float>> deltasVector;
     deltasVector.reserve(nbLayers()+1);//on alloue la place requise
@@ -109,12 +130,12 @@ void NeuralNetwork::train(std::vector<Data>& dataset, int iterations, float alph
     int itBetweenLogs = iterations/10;
 	for (int it = 0; it < iterations; ++it)
 	{
-        if(debugMode)std::cout << std::endl << "Itteration : " << it << std::endl;
-        Data& data = dataset[distr(gen)];
+        if(_debugMode)std::cout << std::endl << "Itteration : " << it << std::endl;
+        Data& data = dataset.data()[distr(gen)];
 		compute(data.input, data.output);
         backpropagate(data.expectedOutput,data.output, deltasVector, alpha, isClassification);
-        //if(debugMode)printDeltas(deltasVector);
-        //if(debugMode)printNetwork();
+        if(_debugMode)printDeltas(deltasVector);
+        if(_debugMode)printNetwork();
         _valuesVector.clear();
         if(it % itBetweenLogs == 0)
         {
@@ -125,16 +146,11 @@ void NeuralNetwork::train(std::vector<Data>& dataset, int iterations, float alph
 }
 
 
-float NeuralNetwork::evaluate(std::vector<Data>& dataset, int iterations, float diffThreshold)
+float NeuralNetwork::evaluate(Dataset& dataset, int iterations, float diffThreshold)
 {
-    for (Data& data : dataset)
-    {
-        data.output.resize(getOutputSize());
-    }
-
     std::random_device rd; // obtain a random number from hardware
     std::mt19937 gen(rd()); // seed the generator
-    std::uniform_int_distribution<> distr(0, dataset.size()- 1);
+    std::uniform_int_distribution<> distr(0, dataset.data().size()- 1);
 
     std::vector<std::vector<float>> deltasVector;
     deltasVector.reserve(nbLayers()+1);//on alloue la place requise
@@ -146,8 +162,8 @@ float NeuralNetwork::evaluate(std::vector<Data>& dataset, int iterations, float 
     float totalGoodPrediction = 0;
     int itBetweenLogs = iterations/10;
     for (int it = 0; it < iterations; ++it) {
-        if (debugMode)std::cout << std::endl << "Itteration : " << it << std::endl;
-        Data& data = dataset[distr(gen)];
+        if (_debugMode) std::cout << std::endl << "Itteration : " << it << std::endl;
+        Data& data = dataset.data()[distr(gen)];
         compute(data.input, data.output);
         _valuesVector.clear();
 
@@ -169,7 +185,7 @@ float NeuralNetwork::evaluate(std::vector<Data>& dataset, int iterations, float 
         }
     }
     std::wcout << "[100% done]" << std::endl;
-    return totalGoodPrediction/static_cast<float>(dataset.size());
+    return totalGoodPrediction/static_cast<float>(dataset.data().size());
 }
 
 void NeuralNetwork::backpropagate(std::vector<float>& expectedOutput, std::vector<float>& output, std::vector<std::vector<float>>& deltasVector, float alpha, bool isClassification)
@@ -255,13 +271,17 @@ int NeuralNetwork::nbLayers()
     return _layers.size() -1;
 }
 
-void NeuralNetwork::printNetwork() {
-    for(int i = 0 ; i < _matrices.size(); i++){
+void NeuralNetwork::printNetwork() const
+{
+    for(int i = 0 ; i < _matrices.size(); i++)
+	{
         std::cout << "Layer " << i << std::endl;
         Matrix<float> mat = _matrices[i];
-        for(int y = 0 ; y < mat.height(); y++){
+        for(int y = 0 ; y < mat.height(); y++)
+		{
             std::cout << "(" << mat(0,y);
-            for(int x = 1 ; x < mat.width(); x++){
+            for(int x = 1 ; x < mat.width(); x++)
+			{
                 std::cout << " , " << mat(x,y);
             }
             std::cout << ")" << std::endl;
@@ -270,28 +290,15 @@ void NeuralNetwork::printNetwork() {
     }
 }
 
-void NeuralNetwork::printDeltas(const std::vector<std::vector<float>>& deltasVector) {
-    for(int i = 0; i < deltasVector.size();i++){
-        std::vector<float> deltas = deltasVector[i];
-        std::cout << "Deltas["<< i << "] : (" << deltas[0];
-        for(int j= 1; j < deltas.size();j++){
-            std::cout << " , " << deltas[j];
-        }
-        std::cout << ")" << std::endl;
-    }
-}
-
-void NeuralNetwork::printValues(const std::vector<float>& values) {
-    std::cout << "(" << values[0];
-    for(int j= 1; j < values.size();j++){
-        std::cout << " , " << values[j];
-    }
-    std::cout << ")" << std::endl;
-}
-
-NeuralNetwork* NeuralNetwork_Create()
+NeuralNetwork::NeuralNetwork(bool debug):
+	_debugMode(debug)
 {
-	return new NeuralNetwork;
+
+}
+
+NeuralNetwork* NeuralNetwork_Create(bool debug)
+{
+	return new NeuralNetwork(debug);
 }
 
 void NeuralNetwork_Destroy(NeuralNetwork* ptr)
@@ -317,4 +324,14 @@ void NeuralNetwork_Compute(NeuralNetwork* ptr, float* input, int inputSize, floa
 void NeuralNetwork_Debug_SetValue(NeuralNetwork* ptr, int matrixIndex, int x, int y, float value)
 {
 	ptr->debug_setValue(matrixIndex, x, y, value);
+}
+
+void NeuralNetwork_Train(NeuralNetwork* ptr, Dataset* dataset, int iterations, float alpha, bool isClassification)
+{
+	ptr->train(*dataset, iterations, alpha, isClassification);
+}
+
+void NeuralNetwork_Evaluate(NeuralNetwork* ptr, Dataset* dataset, int iterations, float diffThreshold)
+{
+	ptr->evaluate(*dataset, iterations, diffThreshold);
 }
