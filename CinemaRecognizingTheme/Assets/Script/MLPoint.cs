@@ -25,4 +25,10 @@ public class MLPoint : MonoBehaviour
     {
         return expectedRenderer.material;
     }
+
+    public void SetVisible(bool val)
+    {
+        outputRenderer.enabled = val;
+        expectedRenderer.enabled = val;
+    }
 }

@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Random = System.Random;
 
@@ -15,13 +16,14 @@ namespace ML
 public class MLTrainer : MonoBehaviour
 {
     public List<int> layerSizes;
+    public float alpha = 0.03f;
+    [SerializeField] private int nbTests = 10;
+    [SerializeField] private int nbIterrationsPerTest = 1000;
+    [SerializeField] [Range(0f, 1f)] private float percentOfTrainingData = 0.75f;
     [SerializeField] private MLPoint pointPrefab;
     [SerializeField] private Material blue;
     [SerializeField] private Material red;
     [SerializeField] private string datasetFolder;
-    [SerializeField] [Range(0f, 1f)] private float percentOfTrainingData = 0.75f;
-    [SerializeField] private int nbTests = 10;
-    [SerializeField] private int nbIterrationsPerTest = 1000;
     [SerializeField] private LineRenderer errorGraph;
     [SerializeField] private Text errorPercent;
 
@@ -31,7 +33,22 @@ public class MLTrainer : MonoBehaviour
     [Header("Import & export")] 
     [SerializeField] private InputField importField;
 
-    private List<MLPoint> points;
+    private List<MLPoint> trainPoints;
+    private bool trainVisible = true;
+    [SerializeField] private Image showTrainButton;
+    private List<MLPoint> testPoints;
+    private bool testVisible = true;
+    [SerializeField] private Image showTestButton;
+    [SerializeField] private Color defaultColor;
+    [SerializeField] private Color visibleColor;
+    
+    [SerializeField] private RawImage mapImage;
+    private bool mapVisible = false;
+    private bool mapComputed = false;
+    [SerializeField] private Image showMapButton;
+
+    [SerializeField] private Text ImportedText;
+    [SerializeField] private Text TrainedText;
 
     private NeuralNetwork network;
     
@@ -45,6 +62,9 @@ public class MLTrainer : MonoBehaviour
 
     private void Start()
     {
+        ImportedText.enabled = false;
+        TrainedText.enabled = false;
+        
         network = new NeuralNetwork(false);
         network.AddLayer(2, OutputFunction.Linear);
         foreach (var size in layerSizes)
@@ -53,7 +73,8 @@ public class MLTrainer : MonoBehaviour
         }
         network.AddLayer(1, OutputFunction.Sigmoid);
         
-        points = new List<MLPoint>();
+        trainPoints = new List<MLPoint>();
+        testPoints = new List<MLPoint>();
         testDataset = new Dataset();
         trainDataset = new Dataset();
         errors = new List<float>();
@@ -112,6 +133,7 @@ public class MLTrainer : MonoBehaviour
         
         Debug.Log("Dataset separated into train and test. " + trainCount + "/" + testCount);
         
+        ImportedText.enabled = true;
     }
 
     public void TrainML()
@@ -124,8 +146,8 @@ public class MLTrainer : MonoBehaviour
             Debug.Log("Beggining of training");
             for (int i = 0; i < nbTests; i++)
             {
-                network.Train(trainDataset, nbIterrationsPerTest, 0.01f, true);
-                float accuracy = network.Evaluate(testDataset, testCount, 0.5f);
+                network.Train(trainDataset, nbIterrationsPerTest, 0.03f, true);
+                float accuracy = network.Evaluate(testDataset, testCount, 0.45f);
                 errors.Add(1-accuracy);
                 errorGraph.positionCount++;
                 
@@ -133,10 +155,11 @@ public class MLTrainer : MonoBehaviour
             }
 
             Debug.Log("Training finished. Total amount of itterations : " + nbTests * nbIterrationsPerTest);
-            showDataset(trainDataset, false);
-            showDataset(testDataset, true);
-            ComputeMap();
+            InstatiateDataset(trainDataset, false, trainPoints, false);
+            InstatiateDataset(testDataset, true, testPoints, true);
             errorPercent.text = "Final error percent : " + errors[nbTests-1] *100f + "%";
+            
+            TrainedText.enabled = true;
         }
         else
         {
@@ -177,6 +200,7 @@ public class MLTrainer : MonoBehaviour
         
         solverMap.Apply();
         solverImage.texture = solverMap;
+        mapComputed = true;
         //Sprite newSprite = Sprite.Create(solverMap,mapRenderer.sprite.rect,mapRenderer.sprite.pivot,mapRenderer.sprite.pixelsPerUnit);
 
         //mapRenderer.sprite = newSprite;
@@ -192,8 +216,9 @@ public class MLTrainer : MonoBehaviour
             }
         }
         solverMap.Apply();
+        mapComputed = false;
     }
-    public void showDataset(Dataset dataset, bool evaluate)
+    public void InstatiateDataset(Dataset dataset, bool evaluate, List<MLPoint> listOfPoints, bool visible)
     {
         
         int dataCount = dataset.GetDataCount();
@@ -207,7 +232,7 @@ public class MLTrainer : MonoBehaviour
             float output = dataset.GetOutput(i, 0);
             
             MLPoint point = Instantiate(pointPrefab, pos, Quaternion.identity,this.transform);
-
+            point.SetVisible(visible);
             Material expectedMat = expected < 0.5 ? blue : red;
             if (evaluate)
             {
@@ -219,17 +244,53 @@ public class MLTrainer : MonoBehaviour
                 point.setMaterial(expectedMat);
             }
             
-            points.Add(point);
+            listOfPoints.Add(point);
         }
     }
     
     public void clear()
     {
-        foreach (var point in points)
+        foreach (var point in trainPoints)
         {
             Destroy(point.gameObject);
         }
-        points.Clear();
+        trainPoints.Clear();
+        foreach (var point in testPoints)
+        {
+            Destroy(point.gameObject);
+        }
+        testPoints.Clear();
+    }
+    
+    public void SwitchToEditor()
+    {
+        SceneManager.LoadScene(1);
+    }
+    public void ShowTrain()
+    {
+        trainVisible = !trainVisible;
+        foreach (var point in trainPoints)
+        {
+            point.SetVisible(trainVisible);
+        }
+        showTrainButton.color = trainVisible ? visibleColor : defaultColor;
+        
+    }
+    public void ShowTest()
+    {
+        testVisible = !testVisible;
+        foreach (var point in testPoints)
+        {
+            point.SetVisible(testVisible);
+        }
+        showTestButton.color = testVisible ? visibleColor : defaultColor;
+    }
+    public void ShowMap()
+    {
+        if(!mapComputed) ComputeMap();
+        mapVisible = !mapVisible;
+        mapImage.enabled = mapVisible;
+        showMapButton.color = testVisible ? visibleColor : defaultColor;
     }
 }
 

@@ -4,7 +4,9 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using UnityEditor;
+using UnityEditor.SearchService;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 
@@ -149,5 +151,10 @@ public class CSVEditor : MonoBehaviour
                 }
             }
         }
+    }
+
+    public void SwitchToTrainer()
+    {
+        SceneManager.LoadScene(0);
     }
 }

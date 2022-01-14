@@ -8,4 +8,10 @@ EditorBuildSettings:
   - enabled: 0
     path: 
     guid: 00000000000000000000000000000000
+  - enabled: 1
+    path: Assets/Scenes/MLTrainer.unity
+    guid: 47afe4db93201a54c93b957959631074
+  - enabled: 1
+    path: Assets/Scenes/CSVEditor.unity
+    guid: 56e78cff6c344c94a8b87b821dba69bb
   m_configObjects: {}
