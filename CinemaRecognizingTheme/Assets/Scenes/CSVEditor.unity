@@ -783,7 +783,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22367e4ff4847da4180ef56ff293b8df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pointPrefab: {fileID: 4190195516059201017, guid: 39ea6ccf3a147954f85a8bdb3a49ea04, type: 3}
+  pointPrefab: {fileID: 8954583624044640622, guid: 39ea6ccf3a147954f85a8bdb3a49ea04, type: 3}
   selector: {fileID: 1947030932}
   selectorSpeed: 10
   blueButton: {fileID: 1280986118}

@@ -50,4 +50,4 @@ API_EXPORT int NeuralNetwork_GetOutputSize(NeuralNetwork* ptr);
 API_EXPORT void NeuralNetwork_Compute(NeuralNetwork* ptr, float* input, int inputSize, float* output, int outputSize);
 API_EXPORT void NeuralNetwork_Debug_SetValue(NeuralNetwork* ptr, int matrixIndex, int x, int y, float value);
 API_EXPORT void NeuralNetwork_Train(NeuralNetwork* ptr, Dataset* dataset, int iterations, float alpha, bool isClassification);
-API_EXPORT void NeuralNetwork_Evaluate(NeuralNetwork* ptr, Dataset* dataset, int iterations, float diffThreshold);
+API_EXPORT float NeuralNetwork_Evaluate(NeuralNetwork* ptr, Dataset* dataset, int iterations, float diffThreshold);

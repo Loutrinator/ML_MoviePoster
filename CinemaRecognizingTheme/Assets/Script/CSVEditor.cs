@@ -12,7 +12,7 @@ public class CSVEditor : MonoBehaviour
 {
     public Plane selectionPlane;
     private Camera camera;
-    [SerializeField] private MeshRenderer pointPrefab;
+    [SerializeField] private MLPoint pointPrefab;
     
     [SerializeField] private Image selector;
     [SerializeField] private float selectorSpeed = 0.5f;
@@ -28,7 +28,7 @@ public class CSVEditor : MonoBehaviour
     [SerializeField] private InputField exportField;
     private int currentColorMode = 0;
 
-    private List<MeshRenderer> points;
+    private List<MLPoint> points;
 
     private Vector3 selectorPosition;
     private Color selectorColor;
@@ -68,8 +68,10 @@ public class CSVEditor : MonoBehaviour
             //Debug.Log("Ligne : " + value[0] + "      " + value[1] + "     " + value[2]);
             
             Vector3 pos = new Vector3(float.Parse(value[0],iv),float.Parse(value[1],iv),0);
-            MeshRenderer point = Instantiate(pointPrefab, pos, Quaternion.identity,this.transform);
-            point.material = float.Parse(value[2],iv) < 0.5 ? blue : red;
+            MLPoint point = Instantiate(pointPrefab, pos, Quaternion.identity,this.transform);
+
+            Material mat = float.Parse(value[2], iv) < 0.5 ? blue : red;
+            point.setMaterial(mat);
             points.Add(point);
         }
     }
@@ -83,11 +85,11 @@ public class CSVEditor : MonoBehaviour
         writer.WriteLine("x,y,color");
 
         CultureInfo iv = CultureInfo.InvariantCulture;
-        foreach (var mr in transform.GetComponentsInChildren<MeshRenderer>())
+        foreach (var point in transform.GetComponentsInChildren<MLPoint>())
         {
             
-            int color = mr.material.color == blue.color ? 0 : 1;
-            writer.WriteLine(mr.transform.position.x.ToString(iv) + "," + mr.transform.position.y.ToString(iv) + "," + color);
+            int color = point.getMaterial().color == blue.color ? 0 : 1;
+            writer.WriteLine(point.transform.position.x.ToString(iv) + "," + point.transform.position.y.ToString(iv) + "," + color);
         }
 
         writer.Close();
@@ -106,7 +108,7 @@ public class CSVEditor : MonoBehaviour
     private void Start()
     {
         camera = FindObjectOfType<Camera>();
-        points = new List<MeshRenderer>();
+        points = new List<MLPoint>();
         
         Image blueImage = blueButton.GetComponent<Image>();
         blueImage.color = blue.color;
@@ -139,8 +141,10 @@ public class CSVEditor : MonoBehaviour
                 {
                     Vector3 pos = hit.point;
                     pos.z = 0;
-                    MeshRenderer point = Instantiate(pointPrefab, pos, Quaternion.identity,this.transform);
-                    point.material = currentColorMode < 0.5 ? blue : red;
+                    MLPoint point = Instantiate(pointPrefab, pos, Quaternion.identity,this.transform);
+                    
+                    Material mat = currentColorMode < 0.5 ? blue : red;
+                    point.setMaterial(mat);
                     points.Add(point);
                 }
             }

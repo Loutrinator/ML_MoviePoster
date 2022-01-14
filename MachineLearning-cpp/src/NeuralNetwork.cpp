@@ -148,9 +148,7 @@ void NeuralNetwork::train(Dataset& dataset, int iterations, float alpha, bool is
 
 float NeuralNetwork::evaluate(Dataset& dataset, int iterations, float diffThreshold)
 {
-    std::random_device rd; // obtain a random number from hardware
-    std::mt19937 gen(rd()); // seed the generator
-    std::uniform_int_distribution<> distr(0, dataset.data().size()- 1);
+
 
     std::vector<std::vector<float>> deltasVector;
     deltasVector.reserve(nbLayers()+1);//on alloue la place requise
@@ -160,10 +158,9 @@ float NeuralNetwork::evaluate(Dataset& dataset, int iterations, float diffThresh
     }
 
     float totalGoodPrediction = 0;
-    int itBetweenLogs = iterations/10;
     for (int it = 0; it < iterations; ++it) {
         if (_debugMode) std::cout << std::endl << "Itteration : " << it << std::endl;
-        Data& data = dataset.data()[distr(gen)];
+        Data& data = dataset.data()[it];
         compute(data.input, data.output);
         _valuesVector.clear();
 
@@ -179,12 +176,8 @@ float NeuralNetwork::evaluate(Dataset& dataset, int iterations, float diffThresh
             totalGoodPrediction++;
         }
 
-        if (it % itBetweenLogs == 0) {
-            std::wcout << "[" << (static_cast<float>(it) / static_cast<float>(iterations)) * 100 << "% done]"
-                       << std::endl;
-        }
     }
-    std::wcout << "[100% done]" << std::endl;
+    std::wcout << "[Evaluation done]" << std::endl;
     return totalGoodPrediction/static_cast<float>(dataset.data().size());
 }
 
@@ -331,7 +324,7 @@ void NeuralNetwork_Train(NeuralNetwork* ptr, Dataset* dataset, int iterations, f
 	ptr->train(*dataset, iterations, alpha, isClassification);
 }
 
-void NeuralNetwork_Evaluate(NeuralNetwork* ptr, Dataset* dataset, int iterations, float diffThreshold)
+float NeuralNetwork_Evaluate(NeuralNetwork* ptr, Dataset* dataset, int iterations, float diffThreshold)
 {
-	ptr->evaluate(*dataset, iterations, diffThreshold);
+	return ptr->evaluate(*dataset, iterations, diffThreshold);
 }

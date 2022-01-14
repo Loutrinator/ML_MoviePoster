@@ -17,8 +17,17 @@ int main()
 	dataset.addData({1, 1}, {1});
 	
 	network.train(dataset,100000,0.01,true);
-	
-	for(Data& data : dataset.data())
+
+    Dataset test;
+    test.addData({0, 0}, {0});
+    test.addData({0.7, 0}, {0});
+    test.addData({0, 0.5}, {0});
+    test.addData({0.8, 0.9}, {1});
+
+    float error = network.evaluate(test, 4, 0.25);
+    std::cout << "Error " << error << std::endl;
+
+	for(Data& data : test.data())
 	{
 
         std::cout << "[" << data.input[0];
