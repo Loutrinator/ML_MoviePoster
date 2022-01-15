@@ -4,12 +4,12 @@ using System.Drawing;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ImageLoader : MonoBehaviour
+public class ImageReader
 {
-    public int width = 0;
-    public int height = 0;
+    public static int width = 0;
+    public static int height = 0;
 
-    public Texture2D LoadImage(string imageId)
+    public static Texture2D LoadImage(string imageId)
     {
         string imagePath = Application.dataPath + "/StreamingAssets/Datasets/Movies/Images/" + imageId + ".jpg";
 
