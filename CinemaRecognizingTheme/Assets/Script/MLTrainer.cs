@@ -58,7 +58,9 @@ public class MLTrainer : MonoBehaviour
     int testCount = 0;
 
     private List<float> errors;
-    
+
+    private bool training = false;
+    private int currentTraining = 0;
 
     private void Start()
     {
@@ -80,6 +82,7 @@ public class MLTrainer : MonoBehaviour
         errors = new List<float>();
 
         CleanUpMap();
+        training = false;
     }
 
     public void ImportFromCSV()
@@ -138,45 +141,22 @@ public class MLTrainer : MonoBehaviour
 
     public void TrainML()
     {
-        if (trainDataset.GetInputCount() > 0)
-        {
-            
-            errorGraph.positionCount = 0;
-            float zScale = nbTests;
-            Debug.Log("Beggining of training");
-            for (int i = 0; i < nbTests; i++)
-            {
-                network.Train(trainDataset, nbIterrationsPerTest, 0.03f, true);
-                float accuracy = network.Evaluate(testDataset, testCount, 0.45f);
-                errors.Add(1-accuracy);
-                errorGraph.positionCount++;
-                
-                errorGraph.SetPosition(i,new Vector3(i/zScale,0,1-accuracy));
-            }
-
-            Debug.Log("Training finished. Total amount of itterations : " + nbTests * nbIterrationsPerTest);
-            InstatiateDataset(trainDataset, false, trainPoints, false);
-            InstatiateDataset(testDataset, true, testPoints, true);
-            errorPercent.text = "Final error percent : " + errors[nbTests-1] *100f + "%";
-            
-            TrainedText.enabled = true;
-        }
-        else
-        {
-            Debug.LogError("Please import datas before training.");
-        }
+        Debug.Log("Beggining of training");
+        training = true;
     }
 
     private void ComputeMap()
     {
         Dataset mapDataset = new Dataset();
         int countPXL = 0;
+        int halfWidth = solverMap.width/2;
+        int halfHeight = solverMap.height/2;
         for (int y = 0; y < solverMap.height; y++)
         {
             for (int x = 0; x < solverMap.width; x++)
             {
-                float normalisedX = x / (float) solverMap.width;
-                float normalisedY = y / (float) solverMap.height;
+                float normalisedX = (x / (float) solverMap.width)*2-1;
+                float normalisedY = (y / (float) solverMap.height)*2-1;
                 mapDataset.AddData(new float[]{normalisedX, normalisedY}, new float[]{0});
                 countPXL++;
             }
@@ -190,11 +170,12 @@ public class MLTrainer : MonoBehaviour
         Color redCol = red.color;
         for(int i = 0; i < dataCount; i++)
         {
-            int x = (int)(mapDataset.GetInput(i, 0) * solverMap.width);
-            int y = (int)(mapDataset.GetInput(i, 1) * solverMap.height);
+            int x = (int)((mapDataset.GetInput(i, 0)+1) * solverMap.width/2f);
+            int y = (int)((mapDataset.GetInput(i, 1)+1) * solverMap.height/2f);
             //Debug.Log("Before : " + x + " " + y);
             float output = mapDataset.GetOutput(i, 0);
-            Color col = Color.Lerp(blueCol, redCol, output);//output < 0.5f ? blueCol : redCol;
+            //Color col = Color.Lerp(blueCol, redCol, output);
+            Color col = output < 0.5f ? blueCol : redCol;
             solverMap.SetPixel(x,y,col);
         }
         
@@ -291,6 +272,48 @@ public class MLTrainer : MonoBehaviour
         mapVisible = !mapVisible;
         mapImage.enabled = mapVisible;
         showMapButton.color = testVisible ? visibleColor : defaultColor;
+    }
+
+    private void Update()
+    {
+        if (training)
+        {
+            if(trainDataset.GetInputCount() > 0)
+            {
+                if(currentTraining < nbTests){
+                
+                    network.Train(trainDataset, nbIterrationsPerTest, 0.03f, true);
+                    float accuracy = network.Evaluate(testDataset, testCount, 0.45f);
+                    errors.Add(1-accuracy);
+                    currentTraining++;
+                    UpdateGraph();
+                }
+                else
+                {
+                    Debug.Log("Training finished. Total amount of itterations : " + nbTests * nbIterrationsPerTest);
+                    InstatiateDataset(trainDataset, false, trainPoints, false);
+                    InstatiateDataset(testDataset, true, testPoints, true);
+                    errorPercent.text = "Final error percent : " + errors[nbTests-1] *100f + "%";
+                    TrainedText.enabled = true;
+                    training = false;
+                }
+
+            }
+            else
+            {
+                Debug.LogError("Please import datas before training.");
+            }
+        }
+    }
+
+    private void UpdateGraph()
+    {
+        errorGraph.positionCount = errors.Count;
+        for (int i = 0; i < errors.Count; i++)
+        {
+            
+            errorGraph.SetPosition(i,new Vector3(i/(float)errors.Count,0,errors[i]));
+        }
     }
 }
 
