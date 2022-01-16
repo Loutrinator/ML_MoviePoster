@@ -37,7 +37,6 @@ namespace ML
         Dataset test;
         private bool training = false;
         private int epochs = 0;
-        private int testDatasetSize = 0;
         private List<float> errors = new List<float>();
         
         public void CreateNeuralNetwork()
@@ -62,7 +61,6 @@ namespace ML
         {
 
             ReadDataset(datasetFileName, nbOfMovieTypes, out train, out test);
-            testDatasetSize = test.GetOutputCount();
             Debug.Log("Datasets created ! ");
             Debug.Log("Training datasets size : " + train.GetDataCount());
             Debug.Log("Testing datasets size : " + test.GetDataCount());
@@ -76,7 +74,7 @@ namespace ML
                 {
             
                     network.Train(train, nbIterrationsPerTest, alpha, true);
-                    float accuracy = network.Evaluate(test, testDatasetSize, 0.499f);
+                    float accuracy = network.Evaluate(test, 0.499f);
                     errors.Add(1-accuracy);
                     UpdateErrorGraph();
                     epochs += nbIterrationsPerTest;

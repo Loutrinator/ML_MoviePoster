@@ -149,7 +149,7 @@ public class MLTrainer : MonoBehaviour
                 countPXL++;
             }
         }
-        network.Evaluate(mapDataset, solverMap.height * solverMap.width, 1);
+        network.Evaluate(mapDataset, 1);
         
         int dataCount = mapDataset.GetDataCount();
 
@@ -271,7 +271,7 @@ public class MLTrainer : MonoBehaviour
                 if(currentTraining < nbTests){
                 
                     network.Train(trainDataset, nbIterrationsPerTest, 0.03f, true);
-                    float accuracy = network.Evaluate(testDataset, testCount, 0.49999f);
+                    float accuracy = network.Evaluate(testDataset, 0.49999f);
                     errors.Add(1-accuracy);
                     currentTraining++;
                     UpdateGraph();
