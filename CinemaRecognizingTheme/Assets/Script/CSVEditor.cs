@@ -54,25 +54,16 @@ public class CSVEditor : MonoBehaviour
     public void ImportFromCSV()
     {
         clearPoints();
-        StreamReader str = new StreamReader(Application.dataPath + "/StreamingAssets/Datasets/TestCases/" + importField.text + ".csv");
-        bool endFile = false;
-        str.ReadLine();
+        string path = "/StreamingAssets/Datasets/TestCases/" + importField.text + ".csv";
+        List<string[]> content = CSVReader.Read(path,',');
         CultureInfo iv = CultureInfo.InvariantCulture;
-        while (!endFile)
+        for(int i = 1; i < content.Count; i++)
         {
-            string data = str.ReadLine();
-            if (data == null)
-            {
-                endFile = true;
-                break;
-            }
-            var value = data.Split(',');
-            //Debug.Log("Ligne : " + value[0] + "      " + value[1] + "     " + value[2]);
-            
-            Vector3 pos = new Vector3(float.Parse(value[0],iv),float.Parse(value[1],iv),0);
+            string[] line = content[i];
+            Vector3 pos = new Vector3(float.Parse(line[0],iv),float.Parse(line[1],iv),0);
             MLPoint point = Instantiate(pointPrefab, pos, Quaternion.identity,this.transform);
 
-            Material mat = float.Parse(value[2], iv) < 0.5 ? blue : red;
+            Material mat = float.Parse(line[2], iv) < 0.5 ? blue : red;
             point.setMaterial(mat);
             points.Add(point);
         }

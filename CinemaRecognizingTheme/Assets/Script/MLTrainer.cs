@@ -88,50 +88,38 @@ public class MLTrainer : MonoBehaviour
     public void ImportFromCSV()
     {
         clear();
-        StreamReader str = new StreamReader(Application.dataPath + "/StreamingAssets/Datasets/" + datasetFolder + importField.text + ".csv");
-        bool endFile = false;
-        str.ReadLine();
+        string path = "/StreamingAssets/Datasets/" + datasetFolder + importField.text + ".csv";
+        List<string[]> content = CSVReader.Read(path,',');
         CultureInfo iv = CultureInfo.InvariantCulture;
-        
-        int countDatas = 0;
-        List<Vector3> rawDatas = new List<Vector3>();
-        
-        while (!endFile)
+        List<float[]> rawDatas = new List<float[]>();
+        for(int i = 1; i < content.Count; i++)
         {
-            string data = str.ReadLine();
-            if (data == null)
-            {
-                endFile = true;
-                break;
-            }
-            var value = data.Split(',');
+            string[] line = content[i];
             //Debug.Log("Ligne : " + value[0] + "      " + value[1] + "     " + value[2]);
-            float x = float.Parse(value[0], iv);
-            float y = float.Parse(value[1], iv);
-            float expectedOut = float.Parse(value[2], iv);
-            rawDatas.Add(new Vector3(x,y,expectedOut));
-            countDatas++;
+            float x = float.Parse(line[0], iv);
+            float y = float.Parse(line[1], iv);
+            float expectedOut = float.Parse(line[2], iv);
+            rawDatas.Add( new []{x, y, expectedOut});
         }
-        Debug.Log("Dataset fully loaded. " + countDatas + " parsed.");
+        Debug.Log("Dataset fully loaded. " + content.Count + " parsed.");
         Random rnd = new Random();
-        IOrderedEnumerable<Vector3> shuffledData = rawDatas.OrderBy(item => rnd.Next());
+        IOrderedEnumerable<float[]> shuffledData = rawDatas.OrderBy(item => rnd.Next());
         
         
-        int i = 0;
-        foreach(Vector3 data in shuffledData)
+        int counter = 0;
+        foreach(float[] data in shuffledData)
         {
-            if (i < countDatas * percentOfTrainingData)
+            if (counter < content.Count * percentOfTrainingData)
             {
-                trainDataset.AddData(new float[]{data.x, data.y}, new float[]{data.z});
+                trainDataset.AddData(new float[]{data[0], data[1]}, new float[]{data[2]});
                 trainCount++;
             }
             else
             {
-                testDataset.AddData(new float[]{data.x, data.y}, new float[]{data.z});
+                testDataset.AddData(new float[]{data[0], data[1]}, new float[]{data[2]});
                 testCount++;
             }
-
-            i++;
+            counter++;
         }
         
         Debug.Log("Dataset separated into train and test. " + trainCount + "/" + testCount);
