@@ -8,10 +8,13 @@ cmake_policy(SET CMP0091 NEW)
 
 project(MachineLearning)
 
-#add_executable(MachineLearning src/Main.cpp src/NeuralNetwork.cpp src/NeuralNetwork.h src/Matrix.h src/OutputFunction.h src/Data.h src/API.h src/Dataset.cpp src/Dataset.h)
-add_library(MachineLearning SHARED src/NeuralNetwork.cpp src/NeuralNetwork.h src/Matrix.h src/OutputFunction.h src/Data.h src/API.h src/Dataset.cpp src/Dataset.h)
+#add_executable(MachineLearning src/Main.cpp src/NeuralNetwork.cpp src/NeuralNetwork.h src/Matrix.h src/OutputFunction.h src/Data.h src/API.h src/Dataset.cpp src/Dataset.h src/JsonHelper.cpp src/JsonHelper.h)
+add_library(MachineLearning SHARED src/NeuralNetwork.cpp src/NeuralNetwork.h src/Matrix.h src/OutputFunction.h src/Data.h src/API.h src/Dataset.cpp src/Dataset.h src/JsonHelper.cpp src/JsonHelper.h)
 
 set_property(TARGET MachineLearning PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 target_compile_options(MachineLearning PRIVATE /Zc:__cplusplus)
 target_compile_features(MachineLearning PRIVATE cxx_std_20)
+
+find_package(nlohmann_json CONFIG REQUIRED)
+target_link_libraries(MachineLearning PRIVATE nlohmann_json nlohmann_json::nlohmann_json)

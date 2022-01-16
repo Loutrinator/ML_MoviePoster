@@ -44,15 +44,15 @@ public:
 		return _data[pos2Index(x, y)];
 	}
 	
-	std::vector<float> operator*(const std::vector<float>& vector) const
+	std::vector<T> operator*(const std::vector<T>& vector) const
 	{
 		assert(vector.size() == width());
 		
-		std::vector<float> res(height());
+		std::vector<T> res(height());
 		
 		for (int y = 0; y < height(); y++)
 		{
-			float value = 0;
+			T value = 0;
 			for (int x = 0; x < width(); x++)
 			{
 				value += this->operator()(x, y) * vector[x];
@@ -61,6 +61,16 @@ public:
 		}
 		
 		return res;
+	}
+	
+	const std::vector<T>& getData() const
+	{
+		return _data;
+	}
+	
+	std::vector<T>& getData()
+	{
+		return _data;
 	}
 
 private:

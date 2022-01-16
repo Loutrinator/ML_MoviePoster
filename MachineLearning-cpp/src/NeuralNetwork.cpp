@@ -1,6 +1,7 @@
 #include "NeuralNetwork.h"
 #include <random>
 #include <iostream>
+#include "JsonHelper.h"
 
 static void printDeltas(const std::vector<std::vector<float>>& deltasVector)
 {
@@ -54,12 +55,12 @@ void NeuralNetwork::addLayer(int neuronCount, OutputFunction outputFunction)
             break;
 	}
 	
-	_layers.emplace_back(std::make_pair(neuronCount, function));
+	_layers.push_back(NeuralLayer{neuronCount, NeuronOutputFunction{outputFunction, function}});
 	
 	if (_layers.size() > 1)
 	{
-		int matrixWidth = _layers[_layers.size()-2].first + 1;
-		int matrixHeight = _layers[_layers.size()-1].first;
+		int matrixWidth = _layers[_layers.size()-2].neuronCount + 1;
+		int matrixHeight = _layers[_layers.size()-1].neuronCount;
 
         std::random_device rd; // obtain a random number from hardware
         std::mt19937 gen(rd()); // seed the generator
@@ -89,7 +90,7 @@ void NeuralNetwork::compute(std::span<float> input, std::span<float> output)
 			}
 		}
 		
-        _layers[i].second(values);//application de la fonction sigmo/lineaire
+        _layers[i].outputFunction.function(values);//application de la fonction sigmo/lineaire
         if(_debugMode)
 		{
             std::cout << "Values after function : ";
@@ -106,12 +107,85 @@ void NeuralNetwork::compute(std::span<float> input, std::span<float> output)
 
 int NeuralNetwork::getOutputSize() const
 {
-	return _layers.back().first;
+	return _layers.back().neuronCount;
 }
 
 void NeuralNetwork::debug_setValue(int matrixIndex, int x, int y, float value)
 {
 	_matrices[matrixIndex](x, y) = value;
+}
+
+void NeuralNetwork::save(const std::filesystem::path& path, bool beautify) const
+{
+	nlohmann::json jsonRoot;
+	
+	nlohmann::json jsonLayers;
+	for (const auto& [neuronCount, outputFunction] : _layers)
+	{
+		nlohmann::json jsonLayer;
+		jsonLayer["neuron_count"] = neuronCount;
+		
+		std::string outputFunctionName;
+		switch (outputFunction.functionType)
+		{
+			case OutputFunction::LINEAR:
+				outputFunctionName = "linear";
+				break;
+			case OutputFunction::SIGMOID:
+				outputFunctionName = "sigmoid";
+				break;
+		}
+		jsonLayer["output_function"] = outputFunctionName;
+		
+		jsonLayers.push_back(jsonLayer);
+	}
+	jsonRoot["layers"] = jsonLayers;
+	
+	nlohmann::json jsonMatrices;
+	for (const Matrix<float>& matrix : _matrices)
+	{
+		jsonMatrices.push_back(matrix.getData());
+	}
+	jsonRoot["matrices"] = jsonMatrices;
+	
+	JsonHelper::saveJsonToFile(jsonRoot, path, beautify);
+}
+
+void NeuralNetwork::load(const std::filesystem::path& path)
+{
+	const nlohmann::json jsonRoot = JsonHelper::loadJsonFromFile(path);
+	
+	const nlohmann::json& jsonLayers = jsonRoot["layers"];
+	for (const nlohmann::json& jsonLayer : jsonLayers)
+	{
+		OutputFunction outputFunction;
+		std::string outputFunctionName = jsonLayer["output_function"].get<std::string>();
+		if (outputFunctionName == "linear")
+		{
+			outputFunction = OutputFunction::LINEAR;
+		}
+		else if (outputFunctionName == "sigmoid")
+		{
+			outputFunction = OutputFunction::SIGMOID;
+		}
+		else
+		{
+			throw std::runtime_error("Unknown output function name.");
+		}
+		
+		addLayer(jsonLayer["neuron_count"].get<int>(), outputFunction);
+	}
+	
+	const nlohmann::json& jsonMatrices = jsonRoot["matrices"];
+	for (int i = 0; i < jsonMatrices.size(); i++)
+	{
+		const nlohmann::json& jsonMatrix = jsonMatrices[i];
+		Matrix<float>& matrix = _matrices[i];
+		
+		assert(jsonMatrix.size() == matrix.getData().size());
+		
+		std::copy(jsonMatrix.begin(), jsonMatrix.end(), matrix.getData().begin());
+	}
 }
 
 void NeuralNetwork::train(Dataset& dataset, int iterations, float alpha, bool isClassification)
@@ -124,7 +198,7 @@ void NeuralNetwork::train(Dataset& dataset, int iterations, float alpha, bool is
     deltasVector.reserve(nbLayers()+1);//on alloue la place requise
     for (const auto& layer : _layers)
     {
-        deltasVector.emplace_back(layer.first);
+        deltasVector.emplace_back(layer.neuronCount);
     }
 
     int itBetweenLogs = iterations/10;
@@ -139,45 +213,46 @@ void NeuralNetwork::train(Dataset& dataset, int iterations, float alpha, bool is
         _valuesVector.clear();
         if(it % itBetweenLogs == 0)
         {
-            std::wcout << "["<< (static_cast<float>(it) / static_cast<float>(iterations))*100 << "% done]" << std::endl;
+            std::cout << "["<< (static_cast<float>(it) / static_cast<float>(iterations))*100 << "% done]" << std::endl;
         }
 	}
-    std::wcout << "[100% done]" << std::endl;
+    std::cout << "[100% done]" << std::endl;
 }
 
 
-float NeuralNetwork::evaluate(Dataset& dataset, int iterations, float diffThreshold)
+float NeuralNetwork::evaluate(Dataset& dataset, float diffThreshold)
 {
-
-
     std::vector<std::vector<float>> deltasVector;
     deltasVector.reserve(nbLayers()+1);//on alloue la place requise
     for (const auto& layer : _layers)
     {
-        deltasVector.emplace_back(layer.first);
+        deltasVector.emplace_back(layer.neuronCount);
     }
 
     float totalGoodPrediction = 0;
-    for (int it = 0; it < iterations; ++it) {
+    for (int it = 0; it < dataset.data().size(); ++it)
+	{
         if (_debugMode) std::cout << std::endl << "Itteration : " << it << std::endl;
         Data& data = dataset.data()[it];
         compute(data.input, data.output);
         _valuesVector.clear();
 
         bool error = false;
-        for (int i = 0; i < data.output.size(); i++) {
+        for (int i = 0; i < data.output.size(); i++)
+		{
             float diff = abs(data.output[i] - data.expectedOutput[i]);
-            if (diff > diffThreshold) {
+            if (diff > diffThreshold)
+			{
                 error = true;
                 break;
             }
         }
-        if (!error) {
+        if (!error)
+		{
             totalGoodPrediction++;
         }
-
     }
-    std::wcout << "[Evaluation done]" << std::endl;
+    std::cout << "[Evaluation done]" << std::endl;
     return totalGoodPrediction/static_cast<float>(dataset.data().size());
 }
 
@@ -207,12 +282,12 @@ void NeuralNetwork::backpropagate(std::vector<float>& expectedOutput, std::vecto
         Matrix<float>& currentMatrix = _matrices[l-1];
 
         //on parcours autant de fois que le layer précédent est grand
-        for(int i = 0; i < _layers[l-1].first; i++)//i = l'input TODO: peut etre retirer - 1
+        for(int i = 0; i < _layers[l-1].neuronCount; i++)//i = l'input TODO: peut etre retirer - 1
         {
             float total = 0;
 
             //on parcours chaque neurone
-            for(int j = 0; j < _layers[l].first; j++)// j = au neurone
+            for(int j = 0; j < _layers[l].neuronCount; j++)// j = au neurone
             {
                 total += currentMatrix(i,j) * currentDeltas[j];//TODO: attention peut etre inverser j et i
             }
@@ -247,10 +322,10 @@ void NeuralNetwork::backpropagate(std::vector<float>& expectedOutput, std::vecto
         std::vector<float>& currentDeltas = deltasVector[l];
         std::vector<float>& previousValues = _valuesVector[l-1];
 
-        for(int i = 0; i < _layers[l-1].first+1; i++)
+        for(int i = 0; i < _layers[l-1].neuronCount+1; i++)
         {
-            float val = i < _layers[l-1].first ? previousValues[i] : 1;//permet de gérer le cas du biais
-            for(int j = 0; j < _layers[l].first; j++)
+            float val = i < _layers[l-1].neuronCount ? previousValues[i] : 1;//permet de gérer le cas du biais
+            for(int j = 0; j < _layers[l].neuronCount; j++)
             {
 
                 matrix(i,j) -= alpha * val * currentDeltas[j];
@@ -324,7 +399,17 @@ void NeuralNetwork_Train(NeuralNetwork* ptr, Dataset* dataset, int iterations, f
 	ptr->train(*dataset, iterations, alpha, isClassification);
 }
 
-float NeuralNetwork_Evaluate(NeuralNetwork* ptr, Dataset* dataset, int iterations, float diffThreshold)
+float NeuralNetwork_Evaluate(NeuralNetwork* ptr, Dataset* dataset, float diffThreshold)
 {
-	return ptr->evaluate(*dataset, iterations, diffThreshold);
+	return ptr->evaluate(*dataset, diffThreshold);
+}
+
+void NeuralNetwork_Save(NeuralNetwork* ptr, const char* path, bool beautify)
+{
+	ptr->save(std::filesystem::path(path), beautify);
+}
+
+void NeuralNetwork_Load(NeuralNetwork* ptr, const char* path)
+{
+	ptr->load(std::filesystem::path(path));
 }

@@ -24,12 +24,11 @@ int main()
     test.addData({0, 0.5}, {0});
     test.addData({0.8, 0.9}, {1});
 
-    float error = network.evaluate(test, 4, 0.25);
+    float error = network.evaluate(test, 0.25);
     std::cout << "Error " << error << std::endl;
 
 	for(Data& data : test.data())
 	{
-
         std::cout << "[" << data.input[0];
         for(int i = 1; i < data.input.size(); ++i){
             std::cout << ", " << data.input[i];

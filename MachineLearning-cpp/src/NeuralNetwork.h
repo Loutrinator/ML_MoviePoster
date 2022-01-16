@@ -10,6 +10,7 @@
 #include "OutputFunction.h"
 #include "API.h"
 #include "Dataset.h"
+#include <filesystem>
 
 class NeuralNetwork
 {
@@ -26,12 +27,27 @@ public:
 	int getOutputSize() const;
 	void compute(std::span<float> input, std::span<float> output);
 	void train(Dataset& dataset, int iterations, float alpha, bool isClassification);
-    float evaluate(Dataset& dataset, int iterations, float diffThreshold);
+    float evaluate(Dataset& dataset, float diffThreshold);
 
 	void debug_setValue(int matrixIndex, int x, int y, float value);
+	
+	void save(const std::filesystem::path& path, bool beautify = false) const;
+	void load(const std::filesystem::path& path);
 
 private:
-	std::vector<std::pair<int, std::function<void(std::vector<float>&)>>> _layers;
+	struct NeuronOutputFunction
+	{
+		OutputFunction functionType;
+		std::function<void(std::vector<float>&)> function;
+	};
+	
+	struct NeuralLayer
+	{
+		int neuronCount;
+		NeuronOutputFunction outputFunction;
+	};
+	
+	std::vector<NeuralLayer> _layers;
     std::vector<Matrix<float>> _matrices;
     std::vector<std::vector<float>> _valuesVector;
 	bool _debugMode;
@@ -50,4 +66,6 @@ API_EXPORT int NeuralNetwork_GetOutputSize(NeuralNetwork* ptr);
 API_EXPORT void NeuralNetwork_Compute(NeuralNetwork* ptr, float* input, int inputSize, float* output, int outputSize);
 API_EXPORT void NeuralNetwork_Debug_SetValue(NeuralNetwork* ptr, int matrixIndex, int x, int y, float value);
 API_EXPORT void NeuralNetwork_Train(NeuralNetwork* ptr, Dataset* dataset, int iterations, float alpha, bool isClassification);
-API_EXPORT float NeuralNetwork_Evaluate(NeuralNetwork* ptr, Dataset* dataset, int iterations, float diffThreshold);
+API_EXPORT float NeuralNetwork_Evaluate(NeuralNetwork* ptr, Dataset* dataset, float diffThreshold);
+API_EXPORT void NeuralNetwork_Save(NeuralNetwork* ptr, const char* path, bool beautify);
+API_EXPORT void NeuralNetwork_Load(NeuralNetwork* ptr, const char* path);
