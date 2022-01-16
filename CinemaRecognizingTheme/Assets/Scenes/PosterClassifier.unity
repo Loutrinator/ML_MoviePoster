@@ -571,7 +571,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 1000 epochs
+  m_Text: 0 epochs
 --- !u!222 &632139222
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -970,7 +970,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'Error percent : 5.424%'
+  m_Text: Error percent
 --- !u!222 &1545804346
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1220,10 +1220,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e41f55cf94544aa49037bf27599cd712, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  layerSizes: 0008000000040000
+  layerSizes: 0800000004000000
   nbOfMovieTypes: 2
   nbIterrationsPerTest: 100
-  percentOfTrain: 0.5
+  alpha: 1
+  percentOfTrain: 0.8
   datasetFileName: train-horror-comedy
   epochsLabel: {fileID: 632139221}
   errorLabel: {fileID: 1545804345}
@@ -1460,7 +1461,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 2075558764}
         m_TargetAssemblyTypeName: ML.MLPosterClassifier, Assembly-CSharp
-        m_MethodName: StartTraining
+        m_MethodName: StopTraining
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

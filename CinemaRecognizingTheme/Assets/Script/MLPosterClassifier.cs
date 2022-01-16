@@ -20,6 +20,7 @@ namespace ML
         public List<int> layerSizes;
         public int nbOfMovieTypes = 2;
         public int nbIterrationsPerTest = 100;
+        [SerializeField] private float alpha = 0.03f;
         [SerializeField] [Range(0f,1f)]
         private float percentOfTrain = 0.5f;
         [SerializeField] 
@@ -46,11 +47,15 @@ namespace ML
             
             network = new NeuralNetwork(false);
             network.AddLayer(nbInputs, OutputFunction.Linear);
+            string desc = nbInputs + " ";
             foreach (var size in layerSizes)
             {
                 network.AddLayer(size, OutputFunction.Sigmoid);
+                desc += size + " ";
             }
             network.AddLayer(nbOfMovieTypes, OutputFunction.Sigmoid);
+            desc += nbOfMovieTypes;
+            Debug.Log("Neural network created : (" + desc + ")");
         }
         
         public void ImportDataset()
@@ -70,7 +75,7 @@ namespace ML
                 if (train.GetInputCount() > 0)
                 {
             
-                    network.Train(train, nbIterrationsPerTest, 0.03f, true);
+                    network.Train(train, nbIterrationsPerTest, alpha, true);
                     float accuracy = network.Evaluate(test, testDatasetSize, 0.499f);
                     errors.Add(1-accuracy);
                     UpdateErrorGraph();
@@ -179,12 +184,13 @@ namespace ML
         {
             training = true;
             epochs = 0;
-            
+            Debug.Log("Started training");
         }
 
         public void StopTraining()
         {
             training = false;
+            Debug.Log("Stopped training");
         }
 
         public void UpdateErrorGraph()

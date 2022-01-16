@@ -271,7 +271,7 @@ public class MLTrainer : MonoBehaviour
                 if(currentTraining < nbTests){
                 
                     network.Train(trainDataset, nbIterrationsPerTest, 0.03f, true);
-                    float accuracy = network.Evaluate(testDataset, testCount, 0.45f);
+                    float accuracy = network.Evaluate(testDataset, testCount, 0.49999f);
                     errors.Add(1-accuracy);
                     currentTraining++;
                     UpdateGraph();
