@@ -46,11 +46,11 @@ private:
 	{
 		int neuronCount;
 		NeuronOutputFunction outputFunction;
+		std::vector<float> values;
 	};
 	
 	std::vector<NeuralLayer> _layers;
     std::vector<Matrix<float>> _matrices;
-    std::vector<std::vector<float>> _valuesVector;
 	bool _debugMode;
 	
     int nbLayers();
