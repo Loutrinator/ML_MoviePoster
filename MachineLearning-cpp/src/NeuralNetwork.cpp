@@ -19,7 +19,7 @@ static void printDeltas(const std::vector<std::vector<float>>& deltasVector)
 static void printValues(const std::vector<float>& values)
 {
 	std::cout << "(" << values[0];
-	for(int j= 1; j < values.size();j++)
+	for(int j= 1; j < values.size()-1;j++)
 	{
 		std::cout << " , " << values[j];
 	}
@@ -55,7 +55,10 @@ void NeuralNetwork::addLayer(int neuronCount, OutputFunction outputFunction)
             break;
 	}
 	
-	_layers.push_back(NeuralLayer{neuronCount, NeuronOutputFunction{outputFunction, function}});
+	NeuralLayer& neuralLayer = _layers.emplace_back();
+	neuralLayer.neuronCount = neuronCount;
+	neuralLayer.outputFunction = NeuronOutputFunction{outputFunction, function};
+	neuralLayer.values.resize(neuronCount + 1);
 	
 	if (_layers.size() > 1)
 	{
@@ -76,33 +79,39 @@ void NeuralNetwork::addLayer(int neuronCount, OutputFunction outputFunction)
 
 void NeuralNetwork::compute(std::span<float> input, std::span<float> output)
 {
-	std::vector<float> values(input.begin(), input.end());
+	std::copy(input.begin(), input.end(), _layers.front().values.begin());
 	
 	for (int i = 0; i < _layers.size(); i++)
 	{
+		std::vector<float>& currentLayerValues = _layers[i].values;
+		
 		if (i > 0)
 		{
-			values = _matrices[i-1] * values; //calcul
-			if(_debugMode)
-			{
-				std::cout << "Values before function : ";
-				printValues(values);
-			}
+			std::vector<float>& previousLayerValues = _layers[i-1].values;
+			std::span<float> currentLayerValuesSpan = std::span<float>(currentLayerValues.begin(), currentLayerValues.begin() + _layers[i].neuronCount); // all elements except last one (the bias value)
+			
+			std::fill(currentLayerValuesSpan.begin(), currentLayerValuesSpan.end(), 0.0f);
+			_matrices[i-1].multiply(previousLayerValues, currentLayerValuesSpan); //calcul
 		}
 		
-        _layers[i].outputFunction.function(values);//application de la fonction sigmo/lineaire
+		if(_debugMode)
+		{
+			std::cout << "Values before function : ";
+			printValues(currentLayerValues);
+		}
+		
+        _layers[i].outputFunction.function(currentLayerValues);//application de la fonction sigmo/lineaire
+		
         if(_debugMode)
 		{
             std::cout << "Values after function : ";
-            printValues(values);
+            printValues(currentLayerValues);
         }
-
-        _valuesVector.push_back(values);//on stoque le resultat
-
-        values.emplace_back(1.0f);//on rajoute 1 pour le prochain
+		
+		currentLayerValues.back() = 1.0f;//on set la value du neuron de biais
 	}
 	
-	std::copy(values.begin(), values.end()-1, output.begin());
+	std::copy(_layers.back().values.begin(), _layers.back().values.end()-1, output.begin());
 }
 
 int NeuralNetwork::getOutputSize() const
@@ -120,13 +129,13 @@ void NeuralNetwork::save(const std::filesystem::path& path, bool beautify) const
 	nlohmann::json jsonRoot;
 	
 	nlohmann::json jsonLayers;
-	for (const auto& [neuronCount, outputFunction] : _layers)
+	for (const NeuralLayer& layer : _layers)
 	{
 		nlohmann::json jsonLayer;
-		jsonLayer["neuron_count"] = neuronCount;
+		jsonLayer["neuron_count"] = layer.neuronCount;
 		
 		std::string outputFunctionName;
-		switch (outputFunction.functionType)
+		switch (layer.outputFunction.functionType)
 		{
 			case OutputFunction::LINEAR:
 				outputFunctionName = "linear";
@@ -210,7 +219,6 @@ void NeuralNetwork::train(Dataset& dataset, int iterations, float alpha, bool is
         backpropagate(data.expectedOutput,data.output, deltasVector, alpha, isClassification);
         if(_debugMode)printDeltas(deltasVector);
         if(_debugMode)printNetwork();
-        _valuesVector.clear();
         if(it % itBetweenLogs == 0)
         {
             std::cout << "["<< (static_cast<float>(it) / static_cast<float>(iterations))*100 << "% done]" << std::endl;
@@ -235,7 +243,6 @@ float NeuralNetwork::evaluate(Dataset& dataset, float diffThreshold)
         if (_debugMode) std::cout << std::endl << "Itteration : " << it << std::endl;
         Data& data = dataset.data()[it];
         compute(data.input, data.output);
-        _valuesVector.clear();
 
         bool error = false;
         for (int i = 0; i < data.output.size(); i++)
@@ -261,8 +268,8 @@ void NeuralNetwork::backpropagate(std::vector<float>& expectedOutput, std::vecto
     //ON COMMENCE PAR CONSTRUIRE LES DELTAS DE LA DERNIERE COUCHE
     //On parcours toutes les sorties du layer d'output
     std::vector<float>& outputLayerDeltas = deltasVector.back();
-    std::vector<float>& outputLayerValues = _valuesVector.back();//les valeurs de la couche de sortie
-    for(int j = 0; j < outputLayerValues.size(); ++j)
+    std::vector<float>& outputLayerValues = _layers.back().values;//les valeurs de la couche de sortie
+    for(int j = 0; j < _layers.back().neuronCount; ++j)
     {
         //on calcule la diff entre la valeur et celle attendue pour le Jeme neurone
         outputLayerDeltas[j] = outputLayerValues[j] - expectedOutput[j];
@@ -278,7 +285,7 @@ void NeuralNetwork::backpropagate(std::vector<float>& expectedOutput, std::vecto
     {
         std::vector<float>& currentDeltas = deltasVector[l];
         std::vector<float>& previousDeltas = deltasVector[l-1];
-        std::vector<float>& previousValues = _valuesVector[l-1];
+        std::vector<float>& previousValues = _layers[l-1].values;
         Matrix<float>& currentMatrix = _matrices[l-1];
 
         //on parcours autant de fois que le layer précédent est grand
@@ -320,7 +327,7 @@ void NeuralNetwork::backpropagate(std::vector<float>& expectedOutput, std::vecto
     {
         Matrix<float>& matrix = _matrices[l-1];
         std::vector<float>& currentDeltas = deltasVector[l];
-        std::vector<float>& previousValues = _valuesVector[l-1];
+        std::vector<float>& previousValues = _layers[l-1].values;
 
         for(int i = 0; i < _layers[l-1].neuronCount+1; i++)
         {
