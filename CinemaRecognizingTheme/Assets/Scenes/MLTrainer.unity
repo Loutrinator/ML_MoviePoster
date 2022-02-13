@@ -1258,9 +1258,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0216092229b312a49afaec79ebaeffd1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  layerSizes: 06000000060000000500000003000000
-  alpha: 0.03
-  nbTests: 200
+  layerSizes: 0300000002000000
+  alpha: 0.01
+  nbTests: 1000
   nbIterrationsPerTest: 1000
   percentOfTrainingData: 0.5
   pointPrefab: {fileID: 8954583624044640622, guid: 39ea6ccf3a147954f85a8bdb3a49ea04, type: 3}

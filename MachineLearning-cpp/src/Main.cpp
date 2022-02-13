@@ -11,20 +11,31 @@ int main()
 
     //Cas de test d'un AND logique
 	Dataset dataset;
-	dataset.addData({0, 0}, {0});
-	dataset.addData({1, 0}, {0});
-	dataset.addData({0, 1}, {0});
-	dataset.addData({1, 1}, {1});
-	
+	dataset.addData({-1, -1}, {-1});// 0 0 | 0
+	dataset.addData({1, -1}, {-1}); // 0 1 | 0
+	dataset.addData({-1, 1}, {-1}); // 1 0 | 0
+	dataset.addData({1, 1}, {1});   // 1 1 | 1
+    /* OR
+	dataset.addData({-1, -1}, {-1});// 0 0 | 0
+	dataset.addData({1, -1}, {1});  // 0 1 | 1
+	dataset.addData({-1, 1}, {1});  // 1 0 | 1
+	dataset.addData({1, 1}, {1});   // 1 1 | 1
+     * */
+    /* XOR
+    dataset.addData({-1, -1}, {-1});// 0 0 | 0
+    dataset.addData({1, -1}, {1});  // 0 1 | 1
+    dataset.addData({-1, 1}, {1});  // 1 0 | 1
+    dataset.addData({1, 1}, {-1});   // 1 1 | 0
+     * */
 	network.train(dataset,100000,0.01,true);
 
     Dataset test;
-    test.addData({0, 0}, {0});
-    test.addData({0.7, 0}, {0});
-    test.addData({0, 0.5}, {0});
+    test.addData({-1, -1}, {-1});
+    test.addData({0.7, -1}, {-1});
+    test.addData({-1, 0.8}, {-1});
     test.addData({0.8, 0.9}, {1});
 
-    float error = network.evaluate(test, 0.25);
+    float error = network.evaluate(test, 0.1,LossFunction::CROSS_ENTROPY);
     std::cout << "Error " << error << std::endl;
 
 	for(Data& data : test.data())

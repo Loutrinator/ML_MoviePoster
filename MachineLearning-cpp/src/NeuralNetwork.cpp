@@ -41,6 +41,81 @@ static void sigmoid(std::vector<float>& values)
         value = tanh(value);
     }
 }
+
+//Loss functions
+/*
+ * MEAN_SQUARE_ERROR,
+    MEAN_ABSOLUTE_ERROR,
+    MEAN_BIAS_ERROR,
+    CROSS_ENTROPY
+ * */
+static float meanSquareError(Dataset& dataset)
+{
+    float sum = 0;
+    for (Data& data : dataset.data())
+    {
+        float dataSum = 0;
+        for (int i = 0; i < data.output.size() ; i++){
+            float outputVal = data.output[i];
+            float expectedVal = data.expectedOutput[i];
+            dataSum += std::pow(outputVal-expectedVal,2);
+        }
+        sum += dataSum / (float)data.output.size();
+    }
+    float res = sum/(float)dataset.data().size();
+    std::cout<< "sum " << sum << " | dataset.data().size() " << dataset.data().size() << " = " << res << std::endl;
+    return res;
+}
+
+static float meanAbsoluteError(Dataset& dataset)
+{
+    float sum = 0;
+    for (Data& data : dataset.data())
+    {
+        float dataSum = 0;
+        for (int i = 0; i < data.output.size() ; i++){
+            float outputVal = data.output[i];
+            float expectedVal = data.expectedOutput[i];
+            dataSum += std::abs(outputVal-expectedVal);
+        }
+        sum += dataSum / (float)data.output.size();
+    }
+    return sum/(float)dataset.data().size();
+}
+static float meanBiasError(Dataset& dataset)
+{
+    float sum = 0;
+    for (Data& data : dataset.data())
+    {
+        float dataSum = 0;
+        for (int i = 0; i < data.output.size() ; i++){
+            float outputVal = data.output[i];
+            float expectedVal = data.expectedOutput[i];
+            dataSum += outputVal-expectedVal;
+        }
+        sum += dataSum / (float)data.output.size();
+    }
+    return sum/(float)dataset.data().size();
+}
+
+static float crossEntropyLoss(Dataset& dataset)
+{
+    float sum = 0;
+    for (Data& data : dataset.data())
+    {
+        float dataSum = 0;
+        for (int i = 0; i < data.output.size() ; i++){
+            float outputVal = (data.output[i] + 1) / 2.0;           // obligé de le passer de -1 1 à 0 1 car une valeur négative sur le log retourne NaN
+            float expectedVal = (data.expectedOutput[i] + 1) / 2.0; // obligé de le passer de -1 1 à 0 1 car une valeur négative sur le log retourne NaN
+            std::cout << "outputVal " << outputVal << "expectedVal " << expectedVal << std::endl;
+            dataSum += -(outputVal * std::log(expectedVal) + (1-outputVal)*std::log(1-expectedVal));
+        }
+        sum += dataSum / (float)data.output.size();
+    }
+    return sum/(float)dataset.data().size();
+}
+
+
 void NeuralNetwork::addLayer(int neuronCount, OutputFunction outputFunction)
 {
 	std::function<void(std::vector<float>&)> function;
@@ -57,7 +132,7 @@ void NeuralNetwork::addLayer(int neuronCount, OutputFunction outputFunction)
 	
 	_layers.push_back(NeuralLayer{neuronCount, NeuronOutputFunction{outputFunction, function}});
 	
-	if (_layers.size() > 1)
+	if (_layers.size() > 1)//pas les inputs
 	{
 		int matrixWidth = _layers[_layers.size()-2].neuronCount + 1;
 		int matrixHeight = _layers[_layers.size()-1].neuronCount;
@@ -76,29 +151,14 @@ void NeuralNetwork::addLayer(int neuronCount, OutputFunction outputFunction)
 
 void NeuralNetwork::compute(std::span<float> input, std::span<float> output)
 {
+    //je créé un vecteur qui va contenir les valeurs de sortie du layer précédent
 	std::vector<float> values(input.begin(), input.end());
 	
 	for (int i = 0; i < _layers.size(); i++)
 	{
-		if (i > 0)
-		{
-			values = _matrices[i-1] * values; //calcul
-			if(_debugMode)
-			{
-				std::cout << "Values before function : ";
-				printValues(values);
-			}
-		}
-		
+		if (i > 0)values = _matrices[i-1] * values; //calcul
         _layers[i].outputFunction.function(values);//application de la fonction sigmo/lineaire
-        if(_debugMode)
-		{
-            std::cout << "Values after function : ";
-            printValues(values);
-        }
-
         _valuesVector.push_back(values);//on stoque le resultat
-
         values.emplace_back(1.0f);//on rajoute 1 pour le prochain
 	}
 	
@@ -201,26 +261,30 @@ void NeuralNetwork::train(Dataset& dataset, int iterations, float alpha, bool is
         deltasVector.emplace_back(layer.neuronCount);
     }
 
-    int itBetweenLogs = iterations/10;
+    //int itBetweenLogs = iterations/10;
 	for (int it = 0; it < iterations; ++it)
 	{
-        if(_debugMode)std::cout << std::endl << "Itteration : " << it << std::endl;
+        //if(_debugMode)std::cout << std::endl << "Itteration : " << it << std::endl;
+
+
         Data& data = dataset.data()[distr(gen)];
 		compute(data.input, data.output);
         backpropagate(data.expectedOutput,data.output, deltasVector, alpha, isClassification);
-        if(_debugMode)printDeltas(deltasVector);
-        if(_debugMode)printNetwork();
+
+
+        //if(_debugMode)printDeltas(deltasVector);
+        //if(_debugMode)printNetwork();
         _valuesVector.clear();
-        if(it % itBetweenLogs == 0)
-        {
-            std::cout << "["<< (static_cast<float>(it) / static_cast<float>(iterations))*100 << "% done]" << std::endl;
-        }
+        //if(it % itBetweenLogs == 0)
+        //{
+        //    std::cout << "["<< (static_cast<float>(it) / static_cast<float>(iterations))*100 << "% done]" << std::endl;
+        //}
 	}
     std::cout << "[100% done]" << std::endl;
 }
 
 
-float NeuralNetwork::evaluate(Dataset& dataset, float diffThreshold)
+float NeuralNetwork::evaluate(Dataset& dataset, float diffThreshold, LossFunction lossFunction)
 {
     std::vector<std::vector<float>> deltasVector;
     deltasVector.reserve(nbLayers()+1);//on alloue la place requise
@@ -229,7 +293,6 @@ float NeuralNetwork::evaluate(Dataset& dataset, float diffThreshold)
         deltasVector.emplace_back(layer.neuronCount);
     }
 
-    float totalGoodPrediction = 0;
     for (int it = 0; it < dataset.data().size(); ++it)
 	{
         if (_debugMode) std::cout << std::endl << "Itteration : " << it << std::endl;
@@ -237,30 +300,35 @@ float NeuralNetwork::evaluate(Dataset& dataset, float diffThreshold)
         compute(data.input, data.output);
         _valuesVector.clear();
 
-        bool error = false;
-        for (int i = 0; i < data.output.size(); i++)
-		{
-            float diff = abs(data.output[i] - data.expectedOutput[i]);
-            if (diff > diffThreshold)
-			{
-                error = true;
-                break;
-            }
-        }
-        if (!error)
-		{
-            totalGoodPrediction++;
-        }
     }
-    std::cout << "[Evaluation done]" << std::endl;
-    return totalGoodPrediction/static_cast<float>(dataset.data().size());
+    float loss = 0;
+    switch (lossFunction) {
+        case LossFunction::MEAN_ABSOLUTE_ERROR:
+            std::cout << "MEAN_ABSOLUTE_ERROR ";
+            loss = meanAbsoluteError(dataset);
+            break;
+        case LossFunction::MEAN_BIAS_ERROR:
+            std::cout << "MEAN_BIAS_ERROR ";
+            loss = meanBiasError(dataset);
+            break;
+        case LossFunction::MEAN_SQUARE_ERROR:
+            std::cout << "MEAN_SQUARE_ERROR ";
+            loss = meanSquareError(dataset);
+            break;
+        case LossFunction::CROSS_ENTROPY:
+            std::cout << "CROSS_ENTROPY ";
+            loss = crossEntropyLoss(dataset);
+            break;
+    }
+    return loss;
 }
 
 void NeuralNetwork::backpropagate(std::vector<float>& expectedOutput, std::vector<float>& output, std::vector<std::vector<float>>& deltasVector, float alpha, bool isClassification)
 {
     //ON COMMENCE PAR CONSTRUIRE LES DELTAS DE LA DERNIERE COUCHE
     //On parcours toutes les sorties du layer d'output
-    std::vector<float>& outputLayerDeltas = deltasVector.back();
+    //deltasVector contient tous les vectors d'erreurs pour chaque couche
+    std::vector<float>& outputLayerDeltas = deltasVector.back();//outputLayerDeltas contient le vector d'erreur pour la derniere couche
     std::vector<float>& outputLayerValues = _valuesVector.back();//les valeurs de la couche de sortie
     for(int j = 0; j < outputLayerValues.size(); ++j)
     {
@@ -276,8 +344,8 @@ void NeuralNetwork::backpropagate(std::vector<float>& expectedOutput, std::vecto
     //ON CALCULE LES DELTAS SUIVANTS A PARTIR DU PREMIER
     for(int l = nbLayers(); l >= 2; --l)//l = la couche
     {
-        std::vector<float>& currentDeltas = deltasVector[l];
-        std::vector<float>& previousDeltas = deltasVector[l-1];
+        std::vector<float>& currentDeltas = deltasVector[l];// pour la premiere itération, = à l'étape 1
+        std::vector<float>& previousDeltas = deltasVector[l-1];//
         std::vector<float>& previousValues = _valuesVector[l-1];
         Matrix<float>& currentMatrix = _matrices[l-1];
 
@@ -291,7 +359,6 @@ void NeuralNetwork::backpropagate(std::vector<float>& expectedOutput, std::vecto
             {
                 total += currentMatrix(i,j) * currentDeltas[j];//TODO: attention peut etre inverser j et i
             }
-
             total *= (1 - powf(previousValues[i],2));
             previousDeltas[i] = total;
         }
@@ -322,12 +389,11 @@ void NeuralNetwork::backpropagate(std::vector<float>& expectedOutput, std::vecto
         std::vector<float>& currentDeltas = deltasVector[l];
         std::vector<float>& previousValues = _valuesVector[l-1];
 
-        for(int i = 0; i < _layers[l-1].neuronCount+1; i++)
+        for(int i = 0; i < _layers[l-1].neuronCount+1; i++)//nb de neurones des inputs de ma couche + biais
         {
             float val = i < _layers[l-1].neuronCount ? previousValues[i] : 1;//permet de gérer le cas du biais
             for(int j = 0; j < _layers[l].neuronCount; j++)
             {
-
                 matrix(i,j) -= alpha * val * currentDeltas[j];
             }
         }
@@ -399,9 +465,9 @@ void NeuralNetwork_Train(NeuralNetwork* ptr, Dataset* dataset, int iterations, f
 	ptr->train(*dataset, iterations, alpha, isClassification);
 }
 
-float NeuralNetwork_Evaluate(NeuralNetwork* ptr, Dataset* dataset, float diffThreshold)
+float NeuralNetwork_Evaluate(NeuralNetwork* ptr, Dataset* dataset, float diffThreshold, LossFunction lossFunction)
 {
-	return ptr->evaluate(*dataset, diffThreshold);
+	return ptr->evaluate(*dataset, diffThreshold, lossFunction);
 }
 
 void NeuralNetwork_Save(NeuralNetwork* ptr, const char* path, bool beautify)

@@ -74,7 +74,7 @@ namespace ML
                 {
             
                     network.Train(train, nbIterrationsPerTest, alpha, true);
-                    float accuracy = network.Evaluate(test, 0.499f);
+                    float accuracy = network.Evaluate(test, 0.499f, LossFunction.MeanSquareError);
                     errors.Add(1-accuracy);
                     UpdateErrorGraph();
                     epochs += nbIterrationsPerTest;

@@ -46,9 +46,9 @@ namespace ML
 			NeuralNetwork_Train(handle, dataset.DangerousGetHandle(), iterations, alpha, isClassification);
 		}
 
-		public float Evaluate(Dataset dataset, float diffThreshold)
+		public float Evaluate(Dataset dataset, float diffThreshold, LossFunction lossFunction)
 		{
-			return NeuralNetwork_Evaluate(handle, dataset.DangerousGetHandle(), diffThreshold);
+			return NeuralNetwork_Evaluate(handle, dataset.DangerousGetHandle(), diffThreshold, lossFunction);
 		}
 		
 		public void Save(string path, bool beautify = false)
@@ -89,7 +89,7 @@ namespace ML
 		private static extern void NeuralNetwork_Train(IntPtr ptr, IntPtr dataset, int iterations, float alpha, bool isClassification);
 
 		[DllImport(DLL_NAME)]
-		private static extern float NeuralNetwork_Evaluate(IntPtr ptr, IntPtr dataset, float diffThreshold);
+		private static extern float NeuralNetwork_Evaluate(IntPtr ptr, IntPtr dataset, float diffThreshold, LossFunction lossFunction);
 
 		[DllImport(DLL_NAME)]
 		private static extern void NeuralNetwork_Save(IntPtr ptr, string path, bool beautify);
