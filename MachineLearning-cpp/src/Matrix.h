@@ -3,64 +3,70 @@
 #include <vector>
 #include <cassert>
 #include <stdexcept>
+#include <span>
 
 template<typename T>
 class Matrix
 {
 public:
-	Matrix(int width, int height, const T& defaultValue = {}):
+	Matrix(size_t width, size_t height, const T& defaultValue = {}):
 		_data(width * height, defaultValue), _width(width), _height(height)
 	{
 	
 	}
 	
-	int width() const
+	size_t width() const
 	{
 		return _width;
 	}
 	
-	int height() const
+	size_t height() const
 	{
 		return _height;
 	}
 	
-	T& operator()(int x, int y)
+	T& operator()(size_t x, size_t y)
 	{
+#if !NDEBUG
 		if (!isInBounds(x, y))
 		{
 			throw std::out_of_range("Position outside of range");
 		}
-		
-		return _data[pos2Index(x, y)];
+#endif
+		return getUnsafe(x, y);
 	}
 	
-	const T& operator()(int x, int y) const
+	const T& operator()(size_t x, size_t y) const
 	{
+#if !NDEBUG
 		if (!isInBounds(x, y))
 		{
 			throw std::out_of_range("Position outside of range");
 		}
-		
-		return _data[pos2Index(x, y)];
+#endif
+		return getUnsafe(x, y);
 	}
 	
-	std::vector<T> operator*(const std::vector<T>& vector) const
+	void multiply(const std::span<T> input, std::span<T> output) const
 	{
-		assert(vector.size() == width());
-		
-		std::vector<T> res(height());
-		
-		for (int y = 0; y < height(); y++)
+#if !NDEBUG
+		if (input.size() != width())
 		{
-			T value = 0;
-			for (int x = 0; x < width(); x++)
+			throw std::invalid_argument("input has wrong size");
+		}
+		if (output.size() != height())
+		{
+			throw std::invalid_argument("output has wrong size");
+		}
+#endif
+		
+		for (size_t y = 0; y < height(); y++)
+		{
+			for (size_t x = 0; x < width(); x++)
 			{
-				value += this->operator()(x, y) * vector[x];
+				output[y] += getUnsafe(x, y) * input[x];
 			}
-			res[y] = value;
 		}
-		
-		return res;
 	}
 	
 	const std::vector<T>& getData() const
@@ -75,10 +81,10 @@ public:
 
 private:
 	std::vector<T> _data;
-	int _width;
-	int _height;
+	size_t _width;
+	size_t _height;
 	
-	bool isInBounds(int x, int y) const
+	bool isInBounds(size_t x, size_t y) const
 	{
 		if (x < 0 || y < 0)
 		{
@@ -93,13 +99,18 @@ private:
 		return true;
 	}
 	
-	int pos2Index(int x, int y) const
+	T& getUnsafe(size_t x, size_t y)
 	{
-		return y * _width + x;
+		return _data[pos2Index(x, y)];
 	}
 	
-	std::pair<int, int> index2Pos(int i) const
+	const T& getUnsafe(size_t x, size_t y) const
 	{
-		return std::make_pair(i % _width, i / _width);
+		return _data[pos2Index(x, y)];
+	}
+	
+	size_t pos2Index(size_t x, size_t y) const
+	{
+		return y * _width + x;
 	}
 };
