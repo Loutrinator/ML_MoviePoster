@@ -12,13 +12,11 @@ void Regression::compute(std::span<float> input, std::span<float> output){
     std::vector<float> values(input.begin(), input.end());
 
     for(int i = 0; i < values.size(); i++){
-        _valuesVector.at(i) = this->b0 + this->b1 * values[i];
+        _valuesVector.push_back(this->b0 + this->b1 * values.at(i));
     }
-
-    std::copy(values.begin(), values.end(), output.begin());
 }
 
-void Regression::estimate_coeff(std::span<float> input, std::span<float> output){
+void Regression::estimate_coeff(std::span<float> input){
     float meanX = 0;
     float meanY = 0;
     float meanXY = 0;
@@ -27,9 +25,12 @@ void Regression::estimate_coeff(std::span<float> input, std::span<float> output)
     for (int i = 0; i < input.size(); i++)
     {
         meanX += input[i];
-        meanY += output[i];
-        meanXY += input[i] * output[i];
-        meanXX += input[i] * input[i];
+        for(int j = 0; j < output.size(); j++){
+            meanY += output[j];
+
+            meanXY += input[i] * output[j];
+            meanXX += input[i] * input[i];
+        }
     }
 
     meanX /= input.size();
@@ -38,8 +39,9 @@ void Regression::estimate_coeff(std::span<float> input, std::span<float> output)
     float ss_xy = meanXY - input.size() * meanY * meanX;
     float ss_xx = meanXX - input.size() * meanX * meanX;
 
-    float b1 = ss_xy / ss_xx;
-    float b0 = meanY - b1 * meanX;
+    float b0 = 0;
+    if(ss_xx != 0) b0 = ss_xy / ss_xx;
+    float b1 = meanY - b0 * meanX;
 
     this->b1 = b1;
     this->b0 = b0;

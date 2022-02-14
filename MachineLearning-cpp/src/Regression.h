@@ -23,12 +23,12 @@ class Regression {
 public:
     Regression(){};
     void compute(std::span<float> input, std::span<float> output);
-    void estimate_coeff(std::span<float> input, std::span<float> output);
+    void estimate_coeff(std::span<float> input);
     float evaluate(Dataset& dataset, float diffThreshold, LossFunction lossFunction);
 
+    std::vector<float> _valuesVector;
 private:
     std::vector<Matrix<float>> _matrices;
-    std::vector<float> _valuesVector;
     float b1;
     float b0;
 };

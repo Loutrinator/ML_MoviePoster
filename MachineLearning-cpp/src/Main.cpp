@@ -1,6 +1,7 @@
 #include <iostream>
 #include "NeuralNetwork.h"
 #include "Data.h"
+#include "Regression.h"
 
 int main()
 {
@@ -35,8 +36,21 @@ int main()
     test.addData({-1, 0.8}, {-1});
     test.addData({0.8, 0.9}, {1});
 
-    float error = network.evaluate(test, 0.1,LossFunction::MEAN_SQUARE_ERROR);
-    std::cout << "Error " << error << std::endl;
+    Regression reg;
+    reg.estimate_coeff(test.data().data()->input);
+    for(Data& data : test.data()){
+
+        reg.compute(data.input, data.output);
+        for(int i = 0; i < reg._valuesVector.size(); i++){
+            std::cout << "valeur de retour : " << reg._valuesVector[i] << std::endl;
+        }
+    }
+
+    float errorReg = reg.evaluate(dataset, 0.1, LossFunction::MEAN_SQUARE_ERROR);
+    std::cout << "Error regression : " << errorReg << std::endl;
+
+    //float error = network.evaluate(test, 0.1,LossFunction::MEAN_SQUARE_ERROR);
+    //std::cout << "Error " << error << std::endl;
 
 	for(Data& data : test.data())
 	{
