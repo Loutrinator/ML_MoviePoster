@@ -26,6 +26,7 @@ namespace ML
         [SerializeField] private float alpha = 0.03f;
         [SerializeField] [Range(0f,1f)]
         private float percentOfTrain = 0.5f;
+        [SerializeField] private DataColorFormat imageDataFormat = DataColorFormat.grayscale;
         [SerializeField] LossFunction lossFunction;
         [SerializeField] private string datasetFileName;
         [SerializeField] private InputField modelName;
@@ -35,7 +36,6 @@ namespace ML
         [SerializeField] private LineRenderer errorGraph;
 
         [SerializeField] private RawImage debugDatasetImage;
-        private DataColorFormat imageDataFormat = DataColorFormat.grayscale;
         private NeuralNetwork network;
 
         Dataset train;

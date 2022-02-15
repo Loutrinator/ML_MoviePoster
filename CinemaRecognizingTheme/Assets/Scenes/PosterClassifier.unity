@@ -2310,13 +2310,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e41f55cf94544aa49037bf27599cd712, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  layerSizes: 2a000000
-  nbOfMovieTypes: 2
-  nbIterrationsPerTest: 1000
+  layerSizes: 7f000000
+  nbOfMovieTypes: 4
+  nbIterrationsPerTest: 5000
   alpha: 0.01
   percentOfTrain: 0.8
+  imageDataFormat: 0
   lossFunction: 0
-  datasetFileName: train-horror-comedy
+  datasetFileName: train-adventure-bio-comedy-familly
   modelName: {fileID: 284497432}
   epochsLabel: {fileID: 632139221}
   errorLabel: {fileID: 1545804345}
