@@ -8,43 +8,40 @@
 #include <iostream>
 #include "JsonHelper.h"
 
-void Regression::compute(std::span<float> input, std::span<float> output){
-    std::vector<float> values(input.begin(), input.end());
-
-    for(int i = 0; i < values.size(); i++){
-        _valuesVector.push_back(this->b0 + this->b1 * values.at(i));
-    }
+void Regression::compute(Dataset *data){
+    //on applique le coeff à la ligne d'input associée et on le redonne dans les output
 }
 
-void Regression::estimate_coeff(std::span<float> input){
-    float meanX = 0;
-    float meanY = 0;
-    float meanXY = 0;
-    float meanXX = 0;
+void Regression::estimate_coeff(Dataset *data){
+    //Matrice de largeur 1 mais de longueur du nb d'output, rempli d'output ?
+    Matrix<float> output(1, data->data().size());
+    for(int i = 0; i < output.height(); i++){
+        output(0,i) = data->data().at(i).expectedOutput.at(0);
+    }
 
-    for (int i = 0; i < input.size(); i++)
-    {
-        meanX += input[i];
-        for(int j = 0; j < output.size(); j++){
-            meanY += output[j];
-
-            meanXY += input[i] * output[j];
-            meanXX += input[i] * input[i];
+    Matrix<float> inputX(data->data().size()+1, data->data().data()->input.size());
+    for(int i = 0; i < data->data().size(); i++){
+        inputX(i,0) = 1.0f;
+        for(int j = 0; j < data->data().data()->input.size(); j++){
+            inputX(i,j) = data->data().at(i).input.at(j);
         }
     }
 
-    meanX /= input.size();
-    meanY /= output.size();
+    Matrix<float> transposed( inputX.height(), inputX.width());
+    for(int i = 0; i < inputX.height(); i++){
+        for(int j = 0; j < inputX.width(); j++){
+            transposed(i,j) = inputX(j,i);
+        }
+    }
 
-    float ss_xy = meanXY - input.size() * meanY * meanX;
-    float ss_xx = meanXX - input.size() * meanX * meanX;
+    //multiplier transposed et inputX
+    Matrix<float> xT_x();
 
-    float b0 = 0;
-    if(ss_xx != 0) b0 = ss_xy / ss_xx;
-    float b1 = meanY - b0 * meanX;
+    //prendre l'inverse
+    Matrix<float> inverse();
 
-    this->b1 = b1;
-    this->b0 = b0;
+    //(transposed * inputX)^-1 * transposed * output -> stocker dans coeff (coeff = {a,b})
+
 }
 
 //Loss functions
@@ -120,13 +117,9 @@ static float crossEntropyLoss(Dataset& dataset)
     return sum/(float)dataset.data().size();
 }
 
-float Regression::evaluate(Dataset& dataset, float diffThreshold, LossFunction lossFunction){
-
-    for(int it = 0; it < dataset.data().size(); ++it){
-        Data& data = dataset.data()[it];
-        compute(data.input, data.output);
-        _valuesVector.clear();
-    }
+float Regression::evaluate(Dataset& dataset, LossFunction lossFunction){
+    compute(&dataset);
+    _valuesVector.clear();
 
     float loss = 0;
     switch (lossFunction) {

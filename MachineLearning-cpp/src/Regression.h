@@ -21,14 +21,14 @@
 
 class Regression {
 public:
-    Regression(){};
-    void compute(std::span<float> input, std::span<float> output);
-    void estimate_coeff(std::span<float> input);
-    float evaluate(Dataset& dataset, float diffThreshold, LossFunction lossFunction);
+    Regression(Matrix<float> matrice) : _matrice(matrice) {};
+    void compute(Dataset *data);
+    void estimate_coeff(Dataset *data);
+    Matrix<float> setMatrice(Dataset *data);
+    float evaluate(Dataset& dataset, LossFunction lossFunction);
 
-    std::vector<float> _valuesVector;
 private:
-    std::vector<Matrix<float>> _matrices;
-    float b1;
-    float b0;
+    Matrix<float> _matrice;
+    std::vector<float> _valuesVector;
+    std::vector<float> coeff;
 };
