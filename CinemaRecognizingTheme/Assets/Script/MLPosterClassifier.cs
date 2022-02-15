@@ -28,6 +28,7 @@ namespace ML
         private float percentOfTrain = 0.5f;
         [SerializeField] LossFunction lossFunction;
         [SerializeField] private string datasetFileName;
+        [SerializeField] private InputField modelName;
 
         [SerializeField] private Text epochsLabel;
         [SerializeField] private Text errorLabel;
@@ -259,14 +260,16 @@ namespace ML
         public void LoadMLP()
         {
             network = new NeuralNetwork();
-            network.Load(Application.dataPath + "/StreamingAssets/Models/mlp-movies.json");
+            network.Load(Application.dataPath + "/StreamingAssets/Models/" + modelName.text + ".json");
+            Debug.Log("Model '" + modelName.text + "' loaded");
         }
 
         public void SaveMLP()
         {
-            string filepath = Application.dataPath + "/StreamingAssets/Models/mlp-movies.json";
+            string filepath = Application.dataPath + "/StreamingAssets/Models/" + modelName.text + ".json";
             network.Save(filepath);
             AssetDatabase.Refresh();
+            Debug.Log("Model '" + modelName.text + "' exported");
         }
 
         public void UpdateErrorGraph()
