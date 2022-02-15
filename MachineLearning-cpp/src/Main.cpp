@@ -35,7 +35,7 @@ int main()
     test.addData({-1, 0.8}, {-1});
     test.addData({0.8, 0.9}, {1});
 
-    float error = network.evaluate(test, 0.1,LossFunction::MEAN_SQUARE_ERROR);
+    float error = network.evaluate(test, 0.1,LossFunction::MEAN_BIAS_ERROR);
     std::cout << "Error " << error << std::endl;
 
 	for(Data& data : test.data())

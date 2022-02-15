@@ -1258,11 +1258,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0216092229b312a49afaec79ebaeffd1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  layerSizes: 0300000002000000
+  layerSizes: 02000000
   alpha: 0.01
-  nbTests: 1000
+  nbTests: 100
   nbIterrationsPerTest: 1000
-  percentOfTrainingData: 0.5
+  percentOfTrainingData: 0.8
+  lossFunction: 1
   pointPrefab: {fileID: 8954583624044640622, guid: 39ea6ccf3a147954f85a8bdb3a49ea04, type: 3}
   blue: {fileID: 2100000, guid: 41d7aafbedd6abc428d4ac394a286a36, type: 2}
   red: {fileID: 2100000, guid: 2e3fa91b1a2b5704195ca36bc8cf2e2b, type: 2}

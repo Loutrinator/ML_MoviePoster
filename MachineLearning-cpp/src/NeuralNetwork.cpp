@@ -304,13 +304,6 @@ void NeuralNetwork::train(Dataset& dataset, int iterations, float alpha, bool is
 
 float NeuralNetwork::evaluate(Dataset& dataset, float diffThreshold, LossFunction lossFunction)
 {
-    std::vector<std::vector<float>> deltasVector;
-    deltasVector.reserve(nbLayers()+1);//on alloue la place requise
-    for (const auto& layer : _layers)
-    {
-        deltasVector.emplace_back(layer.neuronCount);
-    }
-
     for (int it = 0; it < dataset.data().size(); ++it)
 	{
         if (_debugMode) std::cout << std::endl << "Itteration : " << it << std::endl;

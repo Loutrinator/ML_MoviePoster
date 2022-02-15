@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -23,13 +24,14 @@ namespace ML
         [SerializeField] private float alpha = 0.03f;
         [SerializeField] [Range(0f,1f)]
         private float percentOfTrain = 0.5f;
-        [SerializeField] 
-        private string datasetFileName;
+        [SerializeField] LossFunction lossFunction;
+        [SerializeField] private string datasetFileName;
 
         [SerializeField] private Text epochsLabel;
         [SerializeField] private Text errorLabel;
         [SerializeField] private LineRenderer errorGraph;
 
+        [SerializeField] private RawImage debugDatasetImage;
         private DataColorFormat imageDataFormat = DataColorFormat.grayscale;
         private NeuralNetwork network;
 
@@ -74,12 +76,14 @@ namespace ML
                 {
             
                     network.Train(train, nbIterrationsPerTest, alpha, true);
-                    float accuracy = network.Evaluate(test, 0.499f, LossFunction.MeanSquareError);
-                    errors.Add(1-accuracy);
+                    float loss = network.Evaluate(test, 0.499f, lossFunction);
+                    errors.Add(loss);
                     UpdateErrorGraph();
                     epochs += nbIterrationsPerTest;
                     epochsLabel.text = epochs + " epochs";
-                    errorLabel.text = "Error percent : " + (errors[errors.Count - 1] * 100) + "%";
+                    string lossName = "";
+                    
+                    errorLabel.text = lossName + errors[errors.Count - 1];
                 }
                 else
                 {
@@ -88,6 +92,27 @@ namespace ML
             }
         }
 
+        private void FixedUpdate()
+        {
+            if (training && errors.Count > 0)
+            {
+                string lossName = "";
+                switch (lossFunction)
+                {
+                    case LossFunction.MeanAbsoluteError:
+                        lossName = "Mean absolute error : ";
+                        break;
+                    case LossFunction.MeanBiasError:
+                        lossName = "Mean bias error : ";
+                        break;
+                    case LossFunction.MeanSquareError:
+                        lossName = "Mean square error : ";
+                        break;
+                            
+                }
+                errorLabel.text = lossName + errors[errors.Count - 1];
+            }
+        }
         private void ReadDataset(string datasetName, int typeCount, out Dataset train, out Dataset test)
         {
             train = new Dataset();
@@ -102,7 +127,7 @@ namespace ML
             {
                 string[] line = csvContent[i];
                 string imageId = line[0];
-
+                Debug.Log("imageId : " + imageId);
                 Texture2D texture = ImageReader.LoadImage(imageId);
                 float[] dataInputs = extractImageData(texture,imageDataFormat);
                 float[] dataOutputs = new float[typeCount];
@@ -110,16 +135,27 @@ namespace ML
                 //Debug.Log("Image converted : " + dataInputs.Length + " inputs extracted.");
                 for (int j = 0; j < line.Length-2; j++)
                 {
-                    dataOutputs[j] = float.Parse(line[j + 2], iv);
+                    float expectedOut = float.Parse(line[j + 2], iv);
+                    dataOutputs[j] = expectedOut * 2 - 1;
                 }
                 //Debug.Log("Expected outputs : " + dataOutputs.Length + " outputs.");
                 inputs.Add(dataInputs);
+                //Debug.Log("expected " + dataOutputs[0] + " "  + dataOutputs[1]);
                 outputs.Add(dataOutputs);
             }
             
+            /*Debug.Log("RAW");
+            for (int i = 0; i < inputs.Count(); i++)
+            {
+                Debug.Log("Inputs : [" + inputs[i][0] + ";" + inputs[i][1] + ";" + inputs[i][2] + ";" + inputs[i][3] + "] | output : " + outputs[i][0] + ";" + outputs[i][1] + "]");
+            }*/
             //randomisation du dataset
             shuffleDataset(inputs, outputs, out inputs, out outputs);
-            
+            /*Debug.Log("SHUFFLED");
+            for (int i = 0; i < inputs.Count(); i++)
+            {
+                Debug.Log("Inputs : [" + inputs[i][0] + ";" + inputs[i][1] + ";" + inputs[i][2] + ";" + inputs[i][3] + "] | output : " + outputs[i][0] + ";" + outputs[i][1] + "]");
+            }*/
             //separation du dataset randomisé en deux datasets séparés
             int separation = (int)(inputs.Count * percentOfTrain);
             for (int i = 0; i < inputs.Count; i++)
@@ -134,6 +170,32 @@ namespace ML
             }
         }
 
+        public void ShowDataset()
+        {
+            StartCoroutine(ShowReadDataset(datasetFileName, nbOfMovieTypes));
+        }
+        private IEnumerator ShowReadDataset(string datasetName, int typeCount)
+        {
+            train = new Dataset();
+            test = new Dataset();
+            string filepath = "/StreamingAssets/Datasets/Movies/" + datasetName + ".csv";
+            List<string[]> csvContent = CSVReader.Read(filepath,';');
+            List<float[]> inputs = new List<float[]>();
+            List<float[]> outputs = new List<float[]>();
+            Debug.Log("File read: " + csvContent.Count + " lines found.");
+            CultureInfo iv = CultureInfo.InvariantCulture;
+            for (int i = 1; i < csvContent.Count; i++)
+            {
+                string[] line = csvContent[i];
+                string imageId = line[0];
+                Debug.Log("imageId : " + imageId);
+                Texture2D texture = ImageReader.LoadImage(imageId);
+                debugDatasetImage.texture = texture;
+                yield return new WaitForSeconds(0.5f);
+            }
+        }
+        
+        
         private void shuffleDataset(List<float[]> inputs, List<float[]> outputs, out List<float[]>shuffledInputs, out List<float[]> shuffledOutputs)
         {
             Random rng = new Random();
@@ -153,6 +215,7 @@ namespace ML
 
         private float[] extractImageData(Texture2D tex,DataColorFormat format)
         {
+            Debug.Log("texture size : " + tex.width + " " + tex.height);
             int dataSize = tex.width * tex.height;
             if(format == DataColorFormat.rgb) dataSize *= 3; 
             float[] data = new float[dataSize];
@@ -189,6 +252,18 @@ namespace ML
         {
             training = false;
             Debug.Log("Stopped training");
+        }
+
+        public void LoadMLP()
+        {
+            network = new NeuralNetwork();
+            network.Load("/StreamingAssets/Models/mlp-movies.json");
+        }
+
+        public void SaveMLP()
+        {
+            string filepath = "/StreamingAssets/Models/mlp-movies";
+            network.Save(filepath);
         }
 
         public void UpdateErrorGraph()

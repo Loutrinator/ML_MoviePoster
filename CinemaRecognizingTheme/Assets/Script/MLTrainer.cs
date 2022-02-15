@@ -20,12 +20,15 @@ public class MLTrainer : MonoBehaviour
     [SerializeField] private int nbTests = 10;
     [SerializeField] private int nbIterrationsPerTest = 1000;
     [SerializeField] [Range(0f, 1f)] private float percentOfTrainingData = 0.75f;
+    [SerializeField] private LossFunction lossFunction;
+    
     [SerializeField] private MLPoint pointPrefab;
     [SerializeField] private Material blue;
     [SerializeField] private Material red;
     [SerializeField] private string datasetFolder;
     [SerializeField] private LineRenderer errorGraph;
     [SerializeField] private Text errorPercent;
+    
 
     [SerializeField] private RawImage solverImage;
     public Texture2D solverMap;
@@ -49,6 +52,7 @@ public class MLTrainer : MonoBehaviour
 
     [SerializeField] private Text ImportedText;
     [SerializeField] private Text TrainedText;
+    
 
     private NeuralNetwork network;
     
@@ -149,7 +153,7 @@ public class MLTrainer : MonoBehaviour
                 countPXL++;
             }
         }
-        network.Evaluate(mapDataset, 1,LossFunction.MeanSquareError);
+        network.Evaluate(mapDataset, 1,lossFunction);
         
         int dataCount = mapDataset.GetDataCount();
 
@@ -271,8 +275,8 @@ public class MLTrainer : MonoBehaviour
                 if(currentTraining < nbTests){
                 
                     network.Train(trainDataset, nbIterrationsPerTest, 0.03f, true);
-                    float accuracy = network.Evaluate(testDataset, 0.49999f,LossFunction.MeanSquareError);
-                    errors.Add(1-accuracy);
+                    float accuracy = network.Evaluate(testDataset, 0.49999f,lossFunction);
+                    errors.Add(accuracy);
                     currentTraining++;
                     UpdateGraph();
                 }
@@ -281,7 +285,7 @@ public class MLTrainer : MonoBehaviour
                     Debug.Log("Training finished. Total amount of itterations : " + nbTests * nbIterrationsPerTest);
                     InstatiateDataset(trainDataset, false, trainPoints, false);
                     InstatiateDataset(testDataset, true, testPoints, true);
-                    errorPercent.text = "Final error percent : " + errors[nbTests-1] *100f + "%";
+                    
                     TrainedText.enabled = true;
                     training = false;
                 }
@@ -302,6 +306,24 @@ public class MLTrainer : MonoBehaviour
             
             errorGraph.SetPosition(i,new Vector3(i/(float)errors.Count,0,errors[i]));
         }
+        
+        string lossName = "";
+        switch (lossFunction)
+        {
+            case LossFunction.MeanAbsoluteError:
+                lossName = "Mean absolute error : ";
+                break;
+            case LossFunction.MeanBiasError:
+                lossName = "Mean bias error : ";
+                break;
+            case LossFunction.MeanSquareError:
+                lossName = "Mean square error : ";
+                break;
+                            
+        }
+
+        errorPercent.text = lossName;
+        if(errors.Count > 0) errorPercent.text += errors[errors.Count-1];
     }
 }
 
