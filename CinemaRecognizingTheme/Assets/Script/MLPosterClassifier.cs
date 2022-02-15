@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using UnityEditor;
+using UnityEditor.VersionControl;
 using UnityEngine;
 using UnityEngine.UI;
 using Random = System.Random;
@@ -257,13 +259,14 @@ namespace ML
         public void LoadMLP()
         {
             network = new NeuralNetwork();
-            network.Load("/StreamingAssets/Models/mlp-movies.json");
+            network.Load(Application.dataPath + "/StreamingAssets/Models/mlp-movies.json");
         }
 
         public void SaveMLP()
         {
-            string filepath = "/StreamingAssets/Models/mlp-movies";
+            string filepath = Application.dataPath + "/StreamingAssets/Models/mlp-movies.json";
             network.Save(filepath);
+            AssetDatabase.Refresh();
         }
 
         public void UpdateErrorGraph()

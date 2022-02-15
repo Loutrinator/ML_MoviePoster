@@ -50,4 +50,5 @@ int main()
         }
         std::cout << "]" << std::endl;
 	}
+    network.save("./TRUC.json",false);
 }
