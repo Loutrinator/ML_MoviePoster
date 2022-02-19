@@ -625,7 +625,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -31.999939, y: 197}
+  m_AnchoredPosition: {x: -32, y: 197}
   m_SizeDelta: {x: 300, y: 30}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!114 &284497432
@@ -1893,7 +1893,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -31.999939, y: -142}
+  m_AnchoredPosition: {x: -32, y: -142}
   m_SizeDelta: {x: 300, y: 70}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &1609646417
@@ -2105,7 +2105,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -31.999939, y: 136}
+  m_AnchoredPosition: {x: -32, y: 136}
   m_SizeDelta: {x: 300, y: 70}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!114 &1984272042
@@ -2310,14 +2310,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e41f55cf94544aa49037bf27599cd712, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  layerSizes: 7f000000
-  nbOfMovieTypes: 4
-  nbIterrationsPerTest: 5000
+  layerSizes: 2a000000
+  nbOfMovieTypes: 2
+  nbIterrationsPerTest: 1000
   alpha: 0.01
   percentOfTrain: 0.8
-  imageDataFormat: 0
+  imageDataFormat: 1
   lossFunction: 0
-  datasetFileName: train-adventure-bio-comedy-familly
+  datasetFileName: train-horror-comedy
   modelName: {fileID: 284497432}
   epochsLabel: {fileID: 632139221}
   errorLabel: {fileID: 1545804345}
